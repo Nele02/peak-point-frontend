@@ -3,13 +3,14 @@
 	import { loggedInUser } from "$lib/runes.svelte";
 	import Message from "$lib/ui/Message.svelte";
 	import UserCredentials from "$lib/ui/UserCredentials.svelte";
-	import { peakService } from '$lib/services/peak-service';
+	import { peakService } from "$lib/services/peak-service";
 
 	let email = $state("");
 	let password = $state("");
 	let message = $state("");
 
-	async function login() {
+	async function login(event: SubmitEvent) {
+		event.preventDefault();
 		console.log(`attempting to log in email: ${email} with password: ${password}`);
 		let session = await peakService.login(email, password);
 		if (session) {
