@@ -32,9 +32,10 @@ describe("peakService", () => {
 
 	// signup
 
-	it("signup returns true when API returns success=true", async () => {
+	it("signup returns true when API returns 201", async () => {
 		mockedAxios.post.mockResolvedValueOnce({
-			data: { success: true }
+			status: 201,
+			data: {}
 		});
 
 		const user: User = {

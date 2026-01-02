@@ -1,19 +1,14 @@
 <script lang="ts">
-	import { browser } from "$app/environment";
 	import { loggedInUser } from "$lib/runes.svelte";
 	import Heading from "$lib/ui/Heading.svelte";
 	import Menu from "$lib/ui/Menu.svelte";
+	import { onMount } from 'svelte';
+	import { peakService } from '$lib/services/peak-service';
 
-	if (browser) {
-		const savedLoggedInUser = localStorage.peak;
-		if (savedLoggedInUser) {
-			const session = JSON.parse(savedLoggedInUser);
-			loggedInUser.email = session.email;
-			loggedInUser.name = session.name;
-			loggedInUser.token = session.token;
-			loggedInUser._id = session._id;
-		}
-	}
+	onMount(async () => {
+		await peakService.restoreSession();
+	});
+
 </script>
 
 <div class="container">

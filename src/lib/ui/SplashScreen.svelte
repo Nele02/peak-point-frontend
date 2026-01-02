@@ -7,7 +7,7 @@
 						<span class="icon mr-4"><i class="fas fa-mountain"></i></span>
 						PeakPoint
 					</h1>
-					<h2 class="subtitle is-4 mt-2">Track your peaks, categorize them, and plan your next hike.</h2>
+					<h2 class="subtitle is-4 mt-2">Track your peaks.</h2>
 
 					<div class="buttons is-centered mt-5">
 						<a class="button is-medium is-success" href="/signup">
