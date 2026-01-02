@@ -3,5 +3,9 @@
 	import { loggedInUser } from "$lib/runes.svelte";
 
 	loggedInUser.email = "";
+	loggedInUser.name = "";
+	loggedInUser.token = "";
+	loggedInUser._id = "";
+	localStorage.removeItem("peak");
 	goto("/");
 </script>
