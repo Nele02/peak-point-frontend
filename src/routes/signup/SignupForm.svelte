@@ -3,6 +3,7 @@
 	import UserCredentials from "$lib/ui/UserCredentials.svelte";
 	import UserDetails from "$lib/ui/UserDetails.svelte";
 	import Message from "$lib/ui/Message.svelte";
+	import { peakService } from '$lib/services/peak-service';
 
 	let firstName = $state("");
 	let lastName = $state("");
@@ -11,11 +12,12 @@
 	let message = $state("");
 
 	async function signup() {
-		const success = false;
+		const success = await peakService.signup({ firstName, lastName, email, password });
+
 		if (success) {
-			goto("/peaks");
+			goto("/login");
 		} else {
-			message = "Error Trying to sign up";
+			message = "Error trying to sign up";
 		}
 	}
 </script>
