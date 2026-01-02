@@ -1,11 +1,20 @@
 <script lang="ts">
-	import favicon from '$lib/assets/favicon.svg';
+	import { loggedInUser } from "$lib/runes.svelte";
+	import Heading from "$lib/ui/Heading.svelte";
+	import Menu from "$lib/ui/Menu.svelte";
+	import { onMount } from 'svelte';
+	import { peakService } from '$lib/services/peak-service';
 
-	let { children } = $props();
+	onMount(async () => {
+		await peakService.restoreSession();
+	});
+
 </script>
 
-<svelte:head>
-	<link rel="icon" href={favicon} />
-</svelte:head>
-
-{@render children()}
+<div class="container">
+	{#if loggedInUser.email}
+		<Menu />
+		<Heading />
+	{/if}
+	<slot />
+</div>
