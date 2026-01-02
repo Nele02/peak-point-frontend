@@ -1,1 +1,5 @@
-<div class="notification is-primary">Hello from Peak Point!</div>
+<script lang="ts">
+	import SplashScreen from "$lib/ui/SplashScreen.svelte";
+</script>
+
+<SplashScreen />
