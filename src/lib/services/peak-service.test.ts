@@ -159,6 +159,64 @@ describe("peakService", () => {
 		expect(config.params.categoryIds).toEqual(["c1", "c2"]);
 	});
 
+	it("getPeakById success", async () => {
+		mockedAxios.get.mockResolvedValueOnce({
+			data: { _id: "p1", name: "Brocken" }
+		});
+
+		const result = await peakService.getPeakById("p1");
+
+		expect(mockedAxios.get).toHaveBeenCalledWith(`${peakService.baseUrl}/api/peaks/p1`);
+		expect(result._id).toBe("p1");
+		expect(result.name).toBe("Brocken");
+	});
+
+	it("getPeakById throws when request fails", async () => {
+		mockedAxios.get.mockRejectedValueOnce(new Error("Not found"));
+
+		await expect(peakService.getPeakById("missing")).rejects.toThrow();
+	});
+
+	it("createPeak success", async () => {
+		mockedAxios.post.mockResolvedValueOnce({
+			data: { _id: "p1", name: "New Peak" }
+		});
+
+		const payload = { name: "New Peak", elevation: 10, lat: 1, lng: 2 };
+
+		const created = await peakService.createPeak(payload);
+
+		expect(mockedAxios.post).toHaveBeenCalledWith(`${peakService.baseUrl}/api/peaks`, payload);
+		expect(created._id).toBe("p1");
+		expect(created.name).toBe("New Peak");
+	});
+
+	it("createPeak throws when API call fails", async () => {
+		mockedAxios.post.mockRejectedValueOnce(new Error("Bad request"));
+
+		await expect(
+			peakService.createPeak({ name: "", elevation: 0, lat: 0, lng: 0 })
+		).rejects.toThrow();
+	});
+
+	it("deletePeak success", async () => {
+		mockedAxios.delete.mockResolvedValueOnce({ status: 204 });
+
+		await peakService.deletePeak("p1");
+
+		expect(mockedAxios.delete).toHaveBeenCalledWith(`${peakService.baseUrl}/api/peaks/p1`);
+	});
+
+	it("deletePeak throws when API call fails", async () => {
+		mockedAxios.delete.mockRejectedValueOnce(new Error("Forbidden"));
+
+		await expect(peakService.deletePeak("p1")).rejects.toThrow();
+	});
+
+
+
+
+
 	// categories
 
 	it("getAllCategories calls categories api", async () => {

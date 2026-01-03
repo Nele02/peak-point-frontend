@@ -1,20 +1,19 @@
 <script lang="ts">
-	import { loggedInUser } from "$lib/runes.svelte";
-	import Heading from "$lib/ui/Heading.svelte";
+	import { onMount } from "svelte";
 	import Menu from "$lib/ui/Menu.svelte";
-	import { onMount } from 'svelte';
-	import { peakService } from '$lib/services/peak-service';
+	import { peakService } from "$lib/services/peak-service";
+	import { loggedInUser, sessionChecked } from "$lib/runes.svelte";
 
 	onMount(async () => {
-		await peakService.restoreSession();
+		if (!sessionChecked.done) {
+			await peakService.restoreSession();
+		}
 	});
-
 </script>
 
 <div class="container">
-	{#if loggedInUser.email}
+	{#if loggedInUser.token}
 		<Menu />
-		<Heading />
 	{/if}
 	<slot />
 </div>
