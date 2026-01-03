@@ -9,7 +9,7 @@ export const peakService = {
 	cloudinaryCloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME ?? "",
 	cloudinaryUploadPreset: import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET ?? "",
 
-	// --- Auth ---
+	// Auth
 
 	async signup(user: User): Promise<boolean> {
 		try {
@@ -89,7 +89,7 @@ export const peakService = {
 		localStorage.removeItem("peak");
 	},
 
-	// --- Data refresh ---
+	// Data refresh
 
 	async refreshPeakInfo() {
 		if (!loggedInUser.token || !loggedInUser._id) return;
@@ -109,7 +109,7 @@ export const peakService = {
 		}
 	},
 
-	// --- Peaks ---
+	// Peaks
 
 	async getUserPeaks(userId: string, params: { categoryIds?: string | string[] } = {}): Promise<Peak[]> {
 		const res = await axios.get(`${this.baseUrl}/api/users/${userId}/peaks`, {
@@ -119,8 +119,13 @@ export const peakService = {
 		return res.data;
 	},
 
-	async createPeak(peak: Peak): Promise<Peak> {
-		const res = await axios.post(`${this.baseUrl}/api/peaks`, peak);
+	async getPeakById(id: string) {
+		const res = await axios.get(`${this.baseUrl}/api/peaks/${id}`);
+		return res.data;
+	},
+
+	async createPeak(payload: Partial<Peak>): Promise<Peak> {
+		const res = await axios.post(`${this.baseUrl}/api/peaks`, payload);
 		return res.data;
 	},
 
@@ -133,14 +138,14 @@ export const peakService = {
 		await axios.delete(`${this.baseUrl}/api/peaks/${id}`);
 	},
 
-	// --- Categories ---
+	// Categories
 
 	async getAllCategories(): Promise<Category[]> {
 		const res = await axios.get(`${this.baseUrl}/api/categories`);
 		return res.data;
 	},
 
-	// --- Cloudinary Upload ---
+	// Cloudinary Upload
 
 	async uploadImages(files: FileList | File[]): Promise<StoredImage[]> {
 		const list = Array.from(files);
