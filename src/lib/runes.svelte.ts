@@ -12,3 +12,7 @@ export const loggedInUser = $state({
 export const currentPeaks = $state({ peaks: [] as Peak[]});
 
 export const currentCategories = $state({ categories: [] as Category[] });
+
+export const curentDataSets = $state({
+	peaksByCategory: { labels: [] as string[], datasets: [{ values: [] as number[] }] }
+});

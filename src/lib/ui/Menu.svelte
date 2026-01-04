@@ -12,6 +12,7 @@
 		</div>
 		<div id="navbarMenu" class="navbar-menu">
 			<div class="navbar-end">
+				<a class="navbar-item" href="/dashboard"> Dashboard </a>
 				<a class="navbar-item" href="/peaks"> Peaks </a>
 				<a class="navbar-item" href="/logout"> Logout [{loggedInUser.email}]</a>
 			</div>

@@ -52,4 +52,14 @@ describe("PeakCard", () => {
 
 		expect(screen.getByRole("img", { name: "Photo Peak photo 1" })).toBeInTheDocument();
 	});
+
+	it("hides edit button when showEdit=false", () => {
+		render(PeakCard, {
+			peak: { _id: "p1", name: "A", elevation: 1, lat: 0, lng: 0, images: [] },
+			showEdit: false
+		});
+
+		expect(screen.queryByRole("link", { name: /Edit/i })).toBeNull();
+	});
+
 });

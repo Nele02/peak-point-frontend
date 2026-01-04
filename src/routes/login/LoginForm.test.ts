@@ -35,7 +35,7 @@ describe("LoginForm", () => {
 		await fireEvent.click(getByRole("button", { name: /log in/i }));
 
 		expect(loginMock).toHaveBeenCalledWith("test@example.com", "secret");
-		expect(gotoMock).toHaveBeenCalledWith("/peaks");
+		expect(gotoMock).toHaveBeenCalledWith("/dashboard");
 	});
 
 	it("login invalid shows message", async () => {

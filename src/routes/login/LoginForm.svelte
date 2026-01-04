@@ -12,7 +12,7 @@
 		console.log(`attempting to log in email: ${email} with password: ${password}`);
 		let session = await peakService.login(email, password);
 		if (session) {
-			goto("/peaks");
+			goto("/dashboard");
 		} else {
 			email = "";
 			password = "";
