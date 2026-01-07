@@ -1,7 +1,6 @@
 import axios from "axios";
 import qs from "qs";
 import type { Category, Peak, Session, StoredImage, User } from "$lib/types/peak-types";
-import { currentCategories, currentPeaks, loggedInUser, sessionChecked } from "$lib/runes.svelte";
 
 export const peakService = {
 	baseUrl: import.meta.env.VITE_API_BASE_URL ?? "http://localhost:3000",
@@ -26,86 +25,21 @@ export const peakService = {
 			const response = await axios.post(`${this.baseUrl}/api/users/authenticate`, { email, password });
 
 			if (response.data.success) {
+				axios.defaults.headers.common["Authorization"] = "Bearer " + response.data.token;
+
 				const session: Session = {
 					name: response.data.name,
+					email: response.data.email,
 					token: response.data.token,
 					_id: response.data._id
 				};
 
-				this.saveSession(session, email);
-				await this.refreshPeakInfo();
 				return session;
 			}
 			return null;
 		} catch (error) {
 			console.log(error);
 			return null;
-		}
-	},
-
-	saveSession(session: Session, email: string) {
-		Object.assign(loggedInUser, {
-			email,
-			name: session.name,
-			token: session.token,
-			_id: session._id
-		});
-
-		axios.defaults.headers.common["Authorization"] = "Bearer " + session.token;
-		localStorage.setItem("peak", JSON.stringify(loggedInUser));
-	},
-
-	async restoreSession() {
-		try {
-			const saved = localStorage.getItem("peak");
-			if (!saved) return;
-
-			const session = JSON.parse(saved);
-
-			Object.assign(loggedInUser, {
-				email: session.email ?? "",
-				name: session.name ?? "",
-				token: session.token ?? "",
-				_id: session._id ?? ""
-			});
-
-			if (loggedInUser.token) {
-				axios.defaults.headers.common['Authorization'] = 'Bearer ' + loggedInUser.token;
-			}
-		} catch (e) {
-			console.log('restoreSession failed', e);
-			this.clearSession();
-		} finally {
-			sessionChecked.done = true;
-		}
-	},
-
-
-	clearSession() {
-		currentPeaks.peaks = [];
-		currentCategories.categories = [];
-		Object.assign(loggedInUser, { email: "", name: "", token: "", _id: "" });
-		delete axios.defaults.headers.common["Authorization"];
-		localStorage.removeItem("peak");
-	},
-
-	// Data refresh
-
-	async refreshPeakInfo() {
-		if (!loggedInUser.token || !loggedInUser._id) return;
-
-		try {
-			const [categories, peaks] = await Promise.all([
-				this.getAllCategories(),
-				this.getUserPeaks(loggedInUser._id)
-			]);
-
-			currentCategories.categories = categories;
-			currentPeaks.peaks = peaks;
-		} catch (e) {
-			console.log("refreshPeakInfo failed", e);
-			// IMPORTANT: propagate so pages can show an error instead of "No peaks"
-			throw e;
 		}
 	},
 
