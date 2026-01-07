@@ -2,6 +2,10 @@ import axios from "axios";
 import qs from "qs";
 import type { Category, Peak, Session, StoredImage, User } from "$lib/types/peak-types";
 
+function setAuth(token: string) {
+	axios.defaults.headers.common["Authorization"] = "Bearer " + token;
+}
+
 export const peakService = {
 	baseUrl: import.meta.env.VITE_API_BASE_URL ?? "http://localhost:3000",
 
@@ -25,7 +29,7 @@ export const peakService = {
 			const response = await axios.post(`${this.baseUrl}/api/users/authenticate`, { email, password });
 
 			if (response.data.success) {
-				axios.defaults.headers.common["Authorization"] = "Bearer " + response.data.token;
+				setAuth(response.data.token);
 
 				const session: Session = {
 					name: response.data.name,
@@ -45,7 +49,12 @@ export const peakService = {
 
 	// Peaks
 
-	async getUserPeaks(userId: string, params: { categoryIds?: string | string[] } = {}): Promise<Peak[]> {
+	async getUserPeaks(
+		userId: string,
+		token: string,
+		params: { categoryIds?: string | string[] } = {}
+	): Promise<Peak[]> {
+		setAuth(token);
 		const res = await axios.get(`${this.baseUrl}/api/users/${userId}/peaks`, {
 			params,
 			paramsSerializer: (p) => qs.stringify(p, { arrayFormat: "repeat" })
@@ -53,28 +62,33 @@ export const peakService = {
 		return res.data;
 	},
 
-	async getPeakById(id: string) {
+	async getPeakById(id: string, token: string): Promise<Peak> {
+		setAuth(token);
 		const res = await axios.get(`${this.baseUrl}/api/peaks/${id}`);
 		return res.data;
 	},
 
-	async createPeak(payload: Partial<Peak>): Promise<Peak> {
+	async createPeak(payload: Partial<Peak>, token: string): Promise<Peak> {
+		setAuth(token);
 		const res = await axios.post(`${this.baseUrl}/api/peaks`, payload);
 		return res.data;
 	},
 
-	async updatePeak(id: string, payload: Partial<Peak>): Promise<Peak> {
+	async updatePeak(id: string, payload: Partial<Peak>, token: string): Promise<Peak> {
+		setAuth(token);
 		const res = await axios.put(`${this.baseUrl}/api/peaks/${id}`, payload);
 		return res.data;
 	},
 
-	async deletePeak(id: string): Promise<void> {
+	async deletePeak(id: string, token: string): Promise<void> {
+		setAuth(token);
 		await axios.delete(`${this.baseUrl}/api/peaks/${id}`);
 	},
 
 	// Categories
 
-	async getAllCategories(): Promise<Category[]> {
+	async getAllCategories(token: string): Promise<Category[]> {
+		setAuth(token);
 		const res = await axios.get(`${this.baseUrl}/api/categories`);
 		return res.data;
 	},
@@ -91,7 +105,6 @@ export const peakService = {
 
 		const results: StoredImage[] = [];
 		for (const file of list) {
-			// eslint-disable-next-line no-await-in-loop
 			const img = await this.uploadSingleImage(file);
 			results.push(img);
 		}
