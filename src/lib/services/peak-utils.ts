@@ -1,14 +1,10 @@
 import { curentDataSets, currentCategories, currentPeaks, loggedInUser } from "$lib/runes.svelte";
 import type { Category, Peak } from "$lib/types/peak-types";
 import type LeafletMap from "$lib/ui/LeafletMap.svelte";
-import { peakService } from "./peak-service";
 
 function normalizeCategoryIds(categories: Peak["categories"]): string[] {
 	if (!categories) return [];
-
-	if (Array.isArray(categories) && categories.every((c) => typeof c === "string")) {
-		return categories as string[];
-	}
+	if (Array.isArray(categories) && categories.every((c) => typeof c === "string")) return categories as string[];
 
 	if (
 		Array.isArray(categories) &&
@@ -16,7 +12,6 @@ function normalizeCategoryIds(categories: Peak["categories"]): string[] {
 	) {
 		return (categories as { _id: string }[]).map((c) => c._id);
 	}
-
 	return [];
 }
 
@@ -39,33 +34,13 @@ export function computePeaksByCategory(peaks: Peak[], categories: Category[]) {
 	});
 }
 
-export async function refreshPeakMap(map: LeafletMap) {
-	const categories = await peakService.getAllCategories();
-	const peaks = await peakService.getUserPeaks(loggedInUser._id, {});
 
-	for (const c of categories) {
-		await map.addOverlay(c.name);
-	}
-	await map.addOverlay("Uncategorized");
-
-	peaks.forEach((p: Peak) => {
-		const popup = `<strong>${p.name}</strong><br/>${p.elevation} m`;
-		const ids = normalizeCategoryIds(p.categories);
-
-		if (ids.length === 0) {
-			map.addMarkerToOverlay("Uncategorized", p.lat, p.lng, popup);
-			return;
-		}
-
-		ids.forEach((cid) => {
-			const cat = categories.find((x) => x._id === cid);
-			if (cat) map.addMarkerToOverlay(cat.name, p.lat, p.lng, popup);
-		});
-	});
-
-	const last = peaks[peaks.length - 1];
-	if (last) await map.moveTo(last.lat, last.lng);
+export async function refreshPeakState(peaks: Peak[], categories: Category[]) {
+	currentPeaks.peaks = peaks;
+	currentCategories.categories = categories;
+	computePeaksByCategory(currentPeaks.peaks, currentCategories.categories);
 }
+
 
 export function clearPeakState() {
 	currentPeaks.peaks = [];
@@ -76,8 +51,34 @@ export function clearPeakState() {
 	loggedInUser._id = "";
 }
 
-export async function refreshPeakState(peaks: Peak[], categories: Category[]) {
-	currentPeaks.peaks = peaks;
-	currentCategories.categories = categories;
-	computePeaksByCategory(currentPeaks.peaks, currentCategories.categories);
+export async function refreshPeakMap(
+	map: LeafletMap,
+	peaks: Peak[],
+	categories: Category[],
+	onSelectPeak?: (p: Peak) => void
+) {
+	for (const c of categories) {
+		await map.addOverlay(c.name);
+	}
+	await map.addOverlay("Uncategorized");
+
+	peaks.forEach((p) => {
+		const popup = `<strong>${p.name}</strong><br/>${p.elevation} m`;
+		const ids = normalizeCategoryIds(p.categories);
+
+		const click = () => onSelectPeak?.(p);
+
+		if (ids.length === 0) {
+			map.addMarkerToOverlay("Uncategorized", p.lat, p.lng, popup, click);
+			return;
+		}
+
+		ids.forEach((cid) => {
+			const cat = categories.find((x) => x._id === cid);
+			if (cat) map.addMarkerToOverlay(cat.name, p.lat, p.lng, popup, click);
+		});
+	});
+
+	const last = peaks[peaks.length - 1];
+	if (last) await map.moveTo(last.lat, last.lng);
 }
