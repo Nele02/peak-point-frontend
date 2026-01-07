@@ -1,14 +1,20 @@
 <script lang="ts">
-	import { onMount } from "svelte";
 	import Menu from "$lib/ui/Menu.svelte";
-	import { peakService } from "$lib/services/peak-service";
-	import { loggedInUser, sessionChecked } from "$lib/runes.svelte";
+	import { loggedInUser } from "$lib/runes.svelte";
 
-	onMount(async () => {
-		if (!sessionChecked.done) {
-			await peakService.restoreSession();
-		}
-	});
+	export let data: any;
+
+	if (data.session) {
+		loggedInUser.email = data.session.email;
+		loggedInUser.name = data.session.name;
+		loggedInUser.token = data.session.token;
+		loggedInUser._id = data.session._id;
+	} else {
+		loggedInUser.email = "";
+		loggedInUser.name = "";
+		loggedInUser.token = "";
+		loggedInUser._id = "";
+	}
 </script>
 
 <div class="container">
