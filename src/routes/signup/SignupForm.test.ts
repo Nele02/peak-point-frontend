@@ -7,7 +7,7 @@ vi.mock("$lib/services/peak-service", () => ({ peakService: { signup: vi.fn() } 
 import { goto } from "$app/navigation";
 import { peakService } from "$lib/services/peak-service";
 
-import SignupForm from "./SignupForm.svelte"; // Pfad anpassen
+import SignupForm from "./SignupForm.svelte";
 
 const gotoMock = vi.mocked(goto);
 const signupMock = vi.mocked(peakService.signup);
