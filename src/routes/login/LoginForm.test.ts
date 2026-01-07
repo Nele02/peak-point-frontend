@@ -21,7 +21,7 @@ describe("LoginForm", () => {
 	});
 
 	it("login success", async () => {
-		const session: Session = { name: "Test User", token: "jwt-token", _id: "user-id" };
+		const session: Session = { name: "Test User", email:"test@user.com", token: "jwt-token", _id: "user-id" };
 		loginMock.mockResolvedValueOnce(session);
 
 		const { container, getByRole } = render(LoginForm);

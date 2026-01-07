@@ -1,48 +1,20 @@
 <script lang="ts">
-	import { onMount } from "svelte";
 	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
-
 	import PeakForm from "../../PeakForm.svelte";
 	import { peakService } from "$lib/services/peak-service";
-	import { currentCategories, currentPeaks, loggedInUser, sessionChecked } from "$lib/runes.svelte";
+	import { currentCategories, currentPeaks, loggedInUser } from "$lib/runes.svelte";
 	import type { Peak } from "$lib/types/peak-types";
 	import { toPeakPayload } from "$lib/utils/peak-payload";
+	import type { PageProps } from "./$types";
 
-	let loading = $state(true);
-	let errorMsg = $state("");
-	let peak = $state<Peak | null>(null);
+	let { data }: PageProps = $props();
 
-	function requireParamId(value: string | undefined): string {
-		if (!value) throw new Error("Missing peak id");
-		return value;
-	}
-
-	onMount(async () => {
-		try {
-			if (!sessionChecked.done) await peakService.restoreSession();
-			if (!loggedInUser.token || !loggedInUser._id) {
-				goto("/login");
-				return;
-			}
-
-			const id = requireParamId(page.params.id);
-
-			if (currentCategories.categories.length === 0) {
-				currentCategories.categories = await peakService.getAllCategories();
-			}
-
-			peak = await peakService.getPeakById(id);
-		} catch (e) {
-			console.log(e);
-			errorMsg = "Could not load peak.";
-		} finally {
-			loading = false;
-		}
-	});
+	currentCategories.categories = data.categories;
+	let peak = $state<Peak | null>(data.peak ?? null);
 
 	async function submit(updated: Peak, files: File[]) {
-		const id = requireParamId(page.params.id);
+		const id = page.params.id;
 
 		if (files.length > 0) {
 			const uploaded = await peakService.uploadImages(files);
@@ -50,38 +22,31 @@
 		}
 
 		const payload = toPeakPayload(updated);
-		const saved = await peakService.updatePeak(id, payload);
+		const saved = await peakService.updatePeak(id, payload, loggedInUser.token);
 
-		currentPeaks.peaks = currentPeaks.peaks.map((p) => (p._id === id ? saved : p));
+		currentPeaks.peaks = currentPeaks.peaks.map((p) =>
+			p._id === id ? saved : p
+		);
+
 		goto("/peaks");
 	}
 
 	async function removePeak() {
-		const id = requireParamId(page.params.id);
+		if (!confirm("Delete this peak?")) return;
 
-		const ok = confirm("Delete this peak?");
-		if (!ok) return;
-
-		await peakService.deletePeak(id);
+		const id = page.params.id;
+		await peakService.deletePeak(id, loggedInUser.token);
 		currentPeaks.peaks = currentPeaks.peaks.filter((p) => p._id !== id);
-
 		goto("/peaks");
 	}
 </script>
 
 <section class="section">
 	<div class="container">
-		{#if errorMsg}
-			<div class="notification is-danger is-light">{errorMsg}</div>
-		{/if}
-
-		{#if loading}
-			<progress class="progress is-small is-link" max="100">Loading</progress>
-		{:else if peak}
+		{#if peak}
 			<div class="mb-4">
-				<button class="button is-danger is-light" type="button" onclick={removePeak}>
-					<span class="icon is-small"><i class="fas fa-trash"></i></span>
-					<span>Delete</span>
+				<button class="button is-danger is-light" onclick={removePeak}>
+					Delete
 				</button>
 			</div>
 

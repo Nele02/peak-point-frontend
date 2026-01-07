@@ -1,99 +1,54 @@
 <script lang="ts">
-	import { onMount } from "svelte";
 	import { goto } from "$app/navigation";
 
-	import { peakService } from "$lib/services/peak-service";
-	import { currentCategories, currentPeaks, loggedInUser, sessionChecked } from "$lib/runes.svelte";
-
+	import { currentCategories, currentPeaks } from "$lib/runes.svelte";
 	import PeakToolbar from "$lib/ui/PeakToolbar.svelte";
 	import PeakList from "$lib/ui/PeakList.svelte";
+	import type { PageProps } from "./$types";
 
-	let errorMsg = $state("");
+	const props = $props();
 
-	let loadingPeaks = $state(true);
-	let loadingCategories = $state(true);
+	let selected = $state<string[]>(props.data.selectedCategoryIds ?? []);
 
-	let selectedCategoryIds = $state<string[]>([]);
+	$effect(() => {
+		currentCategories.categories = props.data.categories;
+		currentPeaks.peaks = props.data.peaks;
 
-	function toggleCategory(id: string) {
-		selectedCategoryIds = selectedCategoryIds.includes(id)
-			? selectedCategoryIds.filter((x) => x !== id)
-			: [...selectedCategoryIds, id];
-	}
-
-	async function loadPeaks() {
-		try {
-			errorMsg = "";
-			loadingPeaks = true;
-
-			const params = selectedCategoryIds.length > 0 ? { categoryIds: selectedCategoryIds } : {};
-			currentPeaks.peaks = await peakService.getUserPeaks(loggedInUser._id, params);
-		} catch (e) {
-			console.log(e);
-			errorMsg = "Could not load peaks.";
-		} finally {
-			loadingPeaks = false;
-		}
-	}
-
-	async function loadCategories() {
-		try {
-			loadingCategories = true;
-			currentCategories.categories = await peakService.getAllCategories();
-		} catch (e) {
-			console.log(e);
-			errorMsg = "Could not load categories.";
-		} finally {
-			loadingCategories = false;
-		}
-	}
-
-	async function applyFilter() {
-		await loadPeaks();
-	}
-
-	async function clearFilter() {
-		selectedCategoryIds = [];
-		await loadPeaks();
-	}
-
-	onMount(async () => {
-		if (!sessionChecked.done) {
-			await peakService.restoreSession();
-		}
-
-		if (!loggedInUser.token || !loggedInUser._id) {
-			goto("/login");
-			return;
-		}
-
-		await Promise.all([loadCategories(), loadPeaks()]);
+		selected = props.data.selectedCategoryIds ?? [];
 	});
+
+	function toggle(id: string) {
+		selected = selected.includes(id) ? selected.filter((x) => x !== id) : [...selected, id];
+	}
+
+	function buildQuery(): string {
+		if (selected.length === 0) return "";
+		return selected.map((id) => `categoryIds=${encodeURIComponent(id)}`).join("&");
+	}
+
+	async function apply() {
+		const qs = buildQuery();
+		// eslint-disable-next-line svelte/no-navigation-without-resolve
+		await goto(qs ? `/peaks?${qs}` : "/peaks", { invalidateAll: true });
+	}
+
+	async function clear() {
+		selected = [];
+		// eslint-disable-next-line svelte/no-navigation-without-resolve
+		await goto("/peaks", { invalidateAll: true });
+	}
 </script>
 
 <section class="section">
 	<div class="container">
 		<PeakToolbar
 			categories={currentCategories.categories}
-			selected={selectedCategoryIds}
-			onToggle={toggleCategory}
-			onApply={applyFilter}
-			onClear={clearFilter}
+			selected={selected}
+			onToggle={toggle}
+			onApply={apply}
+			onClear={clear}
 		/>
 
-		{#if loadingCategories}
-			<p class="has-text-grey is-size-7 mb-2">Loading categories…</p>
-		{/if}
-
-		{#if errorMsg}
-			<div class="notification is-danger is-light">{errorMsg}</div>
-		{/if}
-
-		{#if loadingPeaks}
-			<progress class="progress is-small is-link" max="100">Loading</progress>
-		{:else}
-			<PeakList peaks={currentPeaks.peaks} />
-		{/if}
-
+		<PeakList peaks={currentPeaks.peaks} />
 	</div>
 </section>
