@@ -94,10 +94,6 @@ Not all UI elements are tested on purpose.
     - `PeakSelectionList`
     - `PeakCard`
 
-### Not Tested (by design)
-- Leaflet map (external library, DOM-heavy)
-- Dashboard page (integration-heavy, planned for Level 5)
-
 This keeps the test suite realistic and focused, similar to the lecture examples.
 
 ---
