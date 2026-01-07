@@ -15,7 +15,6 @@
 
 	let open = $state(false);
 
-	// IMPORTANT: make props reactive in svelte 5
 	let categories = $derived(props.categories ?? []);
 	let selected = $derived(props.selected ?? []);
 
