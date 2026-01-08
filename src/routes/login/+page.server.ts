@@ -12,7 +12,6 @@ export const actions = {
 			throw redirect(307, "/login");
 		}
 
-		console.log(`attempting to log in email: ${email} with password: ${password}`);
 		const session = await peakService.login(email, password);
 
 		if (session) {

@@ -2,23 +2,27 @@
 	import Menu from "$lib/ui/Menu.svelte";
 	import { loggedInUser } from "$lib/runes.svelte";
 
-	export let data: any;
+	const { data } = $props();
 
-	if (data.session) {
-		loggedInUser.email = data.session.email;
-		loggedInUser.name = data.session.name;
-		loggedInUser.token = data.session.token;
-		loggedInUser._id = data.session._id;
-	} else {
-		loggedInUser.email = "";
-		loggedInUser.name = "";
-		loggedInUser.token = "";
-		loggedInUser._id = "";
-	}
+	$effect(() => {
+		const s = data?.session;
+
+		if (s) {
+			loggedInUser.email = s.email;
+			loggedInUser.name = s.name;
+			loggedInUser.token = s.token;
+			loggedInUser._id = s._id;
+		} else {
+			loggedInUser.email = "";
+			loggedInUser.name = "";
+			loggedInUser.token = "";
+			loggedInUser._id = "";
+		}
+	});
 </script>
 
 <div class="container">
-	{#if loggedInUser.token}
+	{#if data?.session}
 		<Menu />
 	{/if}
 	<slot />
