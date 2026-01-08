@@ -1,7 +1,10 @@
 import axios from "axios";
 import qs from "qs";
 import type { Category, Peak, Session, StoredImage, User } from "$lib/types/peak-types";
-import { currentCategories, currentPeaks, loggedInUser, sessionChecked } from "$lib/runes.svelte";
+
+function setAuth(token: string) {
+	axios.defaults.headers.common["Authorization"] = "Bearer " + token;
+}
 
 export const peakService = {
 	baseUrl: import.meta.env.VITE_API_BASE_URL ?? "http://localhost:3000",
@@ -26,14 +29,15 @@ export const peakService = {
 			const response = await axios.post(`${this.baseUrl}/api/users/authenticate`, { email, password });
 
 			if (response.data.success) {
+				setAuth(response.data.token);
+
 				const session: Session = {
 					name: response.data.name,
+					email: response.data.email,
 					token: response.data.token,
 					_id: response.data._id
 				};
 
-				this.saveSession(session, email);
-				await this.refreshPeakInfo();
 				return session;
 			}
 			return null;
@@ -43,75 +47,14 @@ export const peakService = {
 		}
 	},
 
-	saveSession(session: Session, email: string) {
-		Object.assign(loggedInUser, {
-			email,
-			name: session.name,
-			token: session.token,
-			_id: session._id
-		});
-
-		axios.defaults.headers.common["Authorization"] = "Bearer " + session.token;
-		localStorage.setItem("peak", JSON.stringify(loggedInUser));
-	},
-
-	async restoreSession() {
-		try {
-			const saved = localStorage.getItem("peak");
-			if (!saved) return;
-
-			const session = JSON.parse(saved);
-
-			Object.assign(loggedInUser, {
-				email: session.email ?? "",
-				name: session.name ?? "",
-				token: session.token ?? "",
-				_id: session._id ?? ""
-			});
-
-			if (loggedInUser.token) {
-				axios.defaults.headers.common['Authorization'] = 'Bearer ' + loggedInUser.token;
-			}
-		} catch (e) {
-			console.log('restoreSession failed', e);
-			this.clearSession();
-		} finally {
-			sessionChecked.done = true;
-		}
-	},
-
-
-	clearSession() {
-		currentPeaks.peaks = [];
-		currentCategories.categories = [];
-		Object.assign(loggedInUser, { email: "", name: "", token: "", _id: "" });
-		delete axios.defaults.headers.common["Authorization"];
-		localStorage.removeItem("peak");
-	},
-
-	// Data refresh
-
-	async refreshPeakInfo() {
-		if (!loggedInUser.token || !loggedInUser._id) return;
-
-		try {
-			const [categories, peaks] = await Promise.all([
-				this.getAllCategories(),
-				this.getUserPeaks(loggedInUser._id)
-			]);
-
-			currentCategories.categories = categories;
-			currentPeaks.peaks = peaks;
-		} catch (e) {
-			console.log("refreshPeakInfo failed", e);
-			// IMPORTANT: propagate so pages can show an error instead of "No peaks"
-			throw e;
-		}
-	},
-
 	// Peaks
 
-	async getUserPeaks(userId: string, params: { categoryIds?: string | string[] } = {}): Promise<Peak[]> {
+	async getUserPeaks(
+		userId: string,
+		token: string,
+		params: { categoryIds?: string | string[] } = {}
+	): Promise<Peak[]> {
+		setAuth(token);
 		const res = await axios.get(`${this.baseUrl}/api/users/${userId}/peaks`, {
 			params,
 			paramsSerializer: (p) => qs.stringify(p, { arrayFormat: "repeat" })
@@ -119,28 +62,33 @@ export const peakService = {
 		return res.data;
 	},
 
-	async getPeakById(id: string) {
+	async getPeakById(id: string, token: string): Promise<Peak> {
+		setAuth(token);
 		const res = await axios.get(`${this.baseUrl}/api/peaks/${id}`);
 		return res.data;
 	},
 
-	async createPeak(payload: Partial<Peak>): Promise<Peak> {
+	async createPeak(payload: Partial<Peak>, token: string): Promise<Peak> {
+		setAuth(token);
 		const res = await axios.post(`${this.baseUrl}/api/peaks`, payload);
 		return res.data;
 	},
 
-	async updatePeak(id: string, payload: Partial<Peak>): Promise<Peak> {
+	async updatePeak(id: string, payload: Partial<Peak>, token: string): Promise<Peak> {
+		setAuth(token);
 		const res = await axios.put(`${this.baseUrl}/api/peaks/${id}`, payload);
 		return res.data;
 	},
 
-	async deletePeak(id: string): Promise<void> {
+	async deletePeak(id: string, token: string): Promise<void> {
+		setAuth(token);
 		await axios.delete(`${this.baseUrl}/api/peaks/${id}`);
 	},
 
 	// Categories
 
-	async getAllCategories(): Promise<Category[]> {
+	async getAllCategories(token: string): Promise<Category[]> {
+		setAuth(token);
 		const res = await axios.get(`${this.baseUrl}/api/categories`);
 		return res.data;
 	},
@@ -157,7 +105,6 @@ export const peakService = {
 
 		const results: StoredImage[] = [];
 		for (const file of list) {
-			// eslint-disable-next-line no-await-in-loop
 			const img = await this.uploadSingleImage(file);
 			results.push(img);
 		}

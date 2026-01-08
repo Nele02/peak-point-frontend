@@ -1,10 +1,10 @@
-import { curentDataSets } from "$lib/runes.svelte";
+import { curentDataSets, currentCategories, currentPeaks, loggedInUser } from "$lib/runes.svelte";
 import type { Category, Peak } from "$lib/types/peak-types";
-import LeafletMap from "$lib/ui/LeafletMap.svelte";
+import type LeafletMap from "$lib/ui/LeafletMap.svelte";
 
 function normalizeCategoryIds(categories: Peak["categories"]): string[] {
 	if (!categories) return [];
-	if (Array.isArray(categories) && categories.every((c) => typeof c === "string")) return categories;
+	if (Array.isArray(categories) && categories.every((c) => typeof c === "string")) return categories as string[];
 
 	if (
 		Array.isArray(categories) &&
@@ -34,6 +34,23 @@ export function computePeaksByCategory(peaks: Peak[], categories: Category[]) {
 	});
 }
 
+
+export async function refreshPeakState(peaks: Peak[], categories: Category[]) {
+	currentPeaks.peaks = peaks;
+	currentCategories.categories = categories;
+	computePeaksByCategory(currentPeaks.peaks, currentCategories.categories);
+}
+
+
+export function clearPeakState() {
+	currentPeaks.peaks = [];
+	currentCategories.categories = [];
+	loggedInUser.email = "";
+	loggedInUser.name = "";
+	loggedInUser.token = "";
+	loggedInUser._id = "";
+}
+
 export async function refreshPeakMap(
 	map: LeafletMap,
 	peaks: Peak[],
@@ -47,7 +64,6 @@ export async function refreshPeakMap(
 
 	peaks.forEach((p) => {
 		const popup = `<strong>${p.name}</strong><br/>${p.elevation} m`;
-
 		const ids = normalizeCategoryIds(p.categories);
 
 		const click = () => onSelectPeak?.(p);
@@ -66,4 +82,3 @@ export async function refreshPeakMap(
 	const last = peaks[peaks.length - 1];
 	if (last) await map.moveTo(last.lat, last.lng);
 }
-

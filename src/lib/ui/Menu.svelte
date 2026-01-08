@@ -14,7 +14,12 @@
 			<div class="navbar-end">
 				<a class="navbar-item" href="/dashboard"> Dashboard </a>
 				<a class="navbar-item" href="/peaks"> Peaks </a>
-				<a class="navbar-item" href="/logout"> Logout [{loggedInUser.email}]</a>
+				<form method="POST" action="/logout" class="navbar-item">
+					<button type="submit" class="navbar-item">
+						Logout [{loggedInUser.name}]
+					</button>
+				</form>
+
 			</div>
 			<div></div>
 		</div>

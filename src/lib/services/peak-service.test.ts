@@ -27,23 +27,6 @@ type MockAxios = {
 
 const mockedAxios = axios as unknown as MockAxios;
 
-function mockLocalStorage() {
-	let store: Record<string, string> = {};
-
-	return {
-		getItem: (key: string) => store[key] ?? null,
-		setItem: (key: string, value: string) => {
-			store[key] = value;
-		},
-		removeItem: (key: string) => {
-			delete store[key];
-		},
-		clear: () => {
-			store = {};
-		}
-	};
-}
-
 describe("peakService", () => {
 	beforeEach(() => {
 		mockedAxios.post.mockReset();
@@ -51,14 +34,6 @@ describe("peakService", () => {
 		mockedAxios.put.mockReset();
 		mockedAxios.delete.mockReset();
 		mockedAxios.defaults.headers.common = {};
-
-		const ls = mockLocalStorage();
-		vi.stubGlobal("localStorage", {
-			getItem: ls.getItem,
-			setItem: ls.setItem,
-			removeItem: ls.removeItem,
-			clear: ls.clear
-		});
 	});
 
 	// signup
@@ -104,16 +79,20 @@ describe("peakService", () => {
 			data: {
 				success: true,
 				name: "Test User",
+				email: "test@example.com",
 				token: "jwt-token",
 				_id: "user-id"
 			}
 		});
 
-		const refreshSpy = vi.spyOn(peakService, "refreshPeakInfo").mockResolvedValueOnce();
-
 		const session = await peakService.login("test@example.com", "secret");
 
-		const expected: Session = { name: "Test User", token: "jwt-token", _id: "user-id" };
+		const expected: Session = {
+			name: "Test User",
+			email: "test@example.com",
+			token: "jwt-token",
+			_id: "user-id"
+		};
 
 		expect(session).toEqual(expected);
 		expect(mockedAxios.post).toHaveBeenCalledWith(`${peakService.baseUrl}/api/users/authenticate`, {
@@ -121,10 +100,9 @@ describe("peakService", () => {
 			password: "secret"
 		});
 		expect(mockedAxios.defaults.headers.common.Authorization).toBe("Bearer jwt-token");
-		expect(refreshSpy).toHaveBeenCalledOnce();
 	});
 
-	it("login returns null when API call throws (e.g. 401)", async () => {
+	it("login returns null when API call throws", async () => {
 		mockedAxios.post.mockRejectedValueOnce(new Error("Unauthorized"));
 
 		const session = await peakService.login("bad@example.com", "wrong");
@@ -144,29 +122,33 @@ describe("peakService", () => {
 
 	// peaks
 
-	it("getUserPeaks calls user peaks api with query params", async () => {
+	it("getUserPeaks calls user peaks api with query params + token", async () => {
 		mockedAxios.get.mockResolvedValueOnce({
 			data: [{ name: "P1" }]
 		});
 
-		const result = await peakService.getUserPeaks("user-1", { categoryIds: ["c1", "c2"] });
+		const result = await peakService.getUserPeaks("user-1", "t-1", { categoryIds: ["c1", "c2"] });
 
 		expect(Array.isArray(result)).toBe(true);
 		expect(mockedAxios.get).toHaveBeenCalled();
 
+		expect(mockedAxios.defaults.headers.common.Authorization).toBe("Bearer t-1");
+
 		const [url, config] = mockedAxios.get.mock.calls[0];
 		expect(url).toBe(`${peakService.baseUrl}/api/users/user-1/peaks`);
 		expect(config.params.categoryIds).toEqual(["c1", "c2"]);
+		expect(typeof config.paramsSerializer).toBe("function");
 	});
 
-	it("getPeakById success", async () => {
+	it("getPeakById success sets auth header", async () => {
 		mockedAxios.get.mockResolvedValueOnce({
 			data: { _id: "p1", name: "Brocken" }
 		});
 
-		const result = await peakService.getPeakById("p1");
+		const result = await peakService.getPeakById("p1", "t-1");
 
 		expect(mockedAxios.get).toHaveBeenCalledWith(`${peakService.baseUrl}/api/peaks/p1`);
+		expect(mockedAxios.defaults.headers.common.Authorization).toBe("Bearer t-1");
 		expect(result._id).toBe("p1");
 		expect(result.name).toBe("Brocken");
 	});
@@ -174,18 +156,19 @@ describe("peakService", () => {
 	it("getPeakById throws when request fails", async () => {
 		mockedAxios.get.mockRejectedValueOnce(new Error("Not found"));
 
-		await expect(peakService.getPeakById("missing")).rejects.toThrow();
+		await expect(peakService.getPeakById("missing", "t-1")).rejects.toThrow();
 	});
 
-	it("createPeak success", async () => {
+	it("createPeak success sets auth header", async () => {
 		mockedAxios.post.mockResolvedValueOnce({
 			data: { _id: "p1", name: "New Peak" }
 		});
 
 		const payload = { name: "New Peak", elevation: 10, lat: 1, lng: 2 };
 
-		const created = await peakService.createPeak(payload);
+		const created = await peakService.createPeak(payload, "t-1");
 
+		expect(mockedAxios.defaults.headers.common.Authorization).toBe("Bearer t-1");
 		expect(mockedAxios.post).toHaveBeenCalledWith(`${peakService.baseUrl}/api/peaks`, payload);
 		expect(created._id).toBe("p1");
 		expect(created.name).toBe("New Peak");
@@ -194,36 +177,45 @@ describe("peakService", () => {
 	it("createPeak throws when API call fails", async () => {
 		mockedAxios.post.mockRejectedValueOnce(new Error("Bad request"));
 
-		await expect(
-			peakService.createPeak({ name: "", elevation: 0, lat: 0, lng: 0 })
-		).rejects.toThrow();
+		await expect(peakService.createPeak({ name: "", elevation: 0, lat: 0, lng: 0 }, "t-1")).rejects.toThrow();
 	});
 
-	it("deletePeak success", async () => {
+	it("updatePeak success sets auth header", async () => {
+		mockedAxios.put.mockResolvedValueOnce({
+			data: { _id: "p1", name: "Updated" }
+		});
+
+		const payload = { name: "Updated" };
+		const updated = await peakService.updatePeak("p1", payload, "t-1");
+
+		expect(mockedAxios.defaults.headers.common.Authorization).toBe("Bearer t-1");
+		expect(mockedAxios.put).toHaveBeenCalledWith(`${peakService.baseUrl}/api/peaks/p1`, payload);
+		expect(updated.name).toBe("Updated");
+	});
+
+	it("deletePeak success sets auth header", async () => {
 		mockedAxios.delete.mockResolvedValueOnce({ status: 204 });
 
-		await peakService.deletePeak("p1");
+		await peakService.deletePeak("p1", "t-1");
 
+		expect(mockedAxios.defaults.headers.common.Authorization).toBe("Bearer t-1");
 		expect(mockedAxios.delete).toHaveBeenCalledWith(`${peakService.baseUrl}/api/peaks/p1`);
 	});
 
 	it("deletePeak throws when API call fails", async () => {
 		mockedAxios.delete.mockRejectedValueOnce(new Error("Forbidden"));
 
-		await expect(peakService.deletePeak("p1")).rejects.toThrow();
+		await expect(peakService.deletePeak("p1", "t-1")).rejects.toThrow();
 	});
-
-
-
-
 
 	// categories
 
-	it("getAllCategories calls categories api", async () => {
+	it("getAllCategories calls categories api + token", async () => {
 		mockedAxios.get.mockResolvedValueOnce({ data: [{ _id: "c1", name: "Mountains" }] });
 
-		const result = await peakService.getAllCategories();
+		const result = await peakService.getAllCategories("t-1");
 
+		expect(mockedAxios.defaults.headers.common.Authorization).toBe("Bearer t-1");
 		expect(result.length).toBe(1);
 		expect(mockedAxios.get).toHaveBeenCalledWith(`${peakService.baseUrl}/api/categories`);
 	});
@@ -239,7 +231,7 @@ describe("peakService", () => {
 			json: async () => ({ secure_url: "https://img", public_id: "pid-1" })
 		});
 
-		global.fetch = fetchMock;
+		global.fetch = fetchMock as any;
 
 		const file = new File(["x"], "test.png", { type: "image/png" });
 		const img = await peakService.uploadSingleImage(file);

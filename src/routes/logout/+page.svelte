@@ -1,7 +1,4 @@
 <script lang="ts">
-	import { goto } from "$app/navigation";
-	import { peakService } from '$lib/services/peak-service';
-
-	peakService.clearSession();
-	goto("/");
+	import { clearPeakState } from "$lib/services/peak-utils";
+	clearPeakState();
 </script>

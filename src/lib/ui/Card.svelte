@@ -2,15 +2,15 @@
 	let { title = "", children } = $props();
 </script>
 
-<div class="card mb-5" style="height: 100%; display: flex; flex-direction: column;">
+<div class="card" style="height: 100%; display: flex; flex-direction: column;">
 	<header class="card-header">
 		<p class="card-header-title">
 			<span>{title}</span>
 		</p>
 	</header>
 
-	<div class="card-content" style="flex: 1;">
-		<div class="content">
+	<div class="card-content" style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
+		<div class="content" style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
 			{@render children()}
 		</div>
 	</div>

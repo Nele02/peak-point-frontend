@@ -12,11 +12,13 @@
 		No peaks yet. Create your first one!
 	</div>
 {:else}
-	<div class="columns is-multiline">
+	<div class="columns is-multiline is-align-items-stretch">
 		{#each peaks as p (p._id)}
 			<div class="column is-one-third is-flex">
-				<div style="width: 100%;">
-					<PeakCard peak={p} />
+				<div style="width: 100%; height: 100%; display: flex; flex-direction: column;">
+					<div style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
+						<PeakCard peak={p} />
+					</div>
 				</div>
 			</div>
 		{/each}
