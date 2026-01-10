@@ -1,23 +1,20 @@
 import { describe, it, expect } from "vitest";
-import { computePeaksByCategory } from "./peak-utils";
-import { curentDataSets } from "$lib/runes.svelte";
-import type { Category, Peak } from "$lib/types/peak-types";
+import { distanceMeters, nearestPeaks } from "./map-utils";
+import type { Peak } from "$lib/types/peak-types";
 
-describe("peak-utils", () => {
-	it("computePeaksByCategory fills labels and values", () => {
-		const categories: Category[] = [
-			{ _id: "c1", name: "Alps" },
-			{ _id: "c2", name: "Harz" }
-		];
+describe("map-utils", () => {
+	it("distanceMeters returns ~0 for same point", () => {
+		const d = distanceMeters({ lat: 0, lng: 0 }, { lat: 0, lng: 0 });
+		expect(d).toBeLessThan(0.001);
+	});
 
-		const peaks: Peak[] = [
-			{ _id: "p1", name: "A", elevation: 1, lat: 0, lng: 0, categories: ["c1"], images: [] },
-			{ _id: "p2", name: "B", elevation: 1, lat: 0, lng: 0, categories: ["c1", "c2"], images: [] }
-		];
+	it("nearestPeaks filters by radius", () => {
+		const sel = { _id: "1", name: "A", elevation: 1000, lat: 0, lng: 0, images: [] } as Peak;
+		const near = { _id: "2", name: "B", elevation: 900, lat: 0.01, lng: 0, images: [] } as Peak;
+		const far = { _id: "3", name: "C", elevation: 800, lat: 2, lng: 0, images: [] } as Peak;
 
-		computePeaksByCategory(peaks, categories);
-
-		expect(curentDataSets.peaksByCategory.labels).toEqual(["Alps", "Harz"]);
-		expect(curentDataSets.peaksByCategory.datasets[0].values).toEqual([2, 1]);
+		const res = nearestPeaks([sel, near, far], sel, 3000, 10);
+		expect(res.length).toBe(1);
+		expect(res[0].peak._id).toBe("2");
 	});
 });

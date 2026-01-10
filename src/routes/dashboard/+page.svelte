@@ -28,33 +28,38 @@
 
 	function selectPeak(p: Peak) {
 		selectedPeak = normalizeSelectedPeak(p);
-		map?.moveTo(p.lat, p.lng);
+		map?.moveTo(p.lat, p.lng).catch(console.log);
 	}
 
-	async function buildMapAndSelectDefault() {
+	async function buildMap() {
 		if (!mapReady) return;
 
 		computePeaksByCategory(currentPeaks.peaks, currentCategories.categories);
 
 		await map.clearOverlays();
-		await refreshPeakMap(map, currentPeaks.peaks, currentCategories.categories, selectPeak);
+		await map.clearMarkers();
 
-		const last = currentPeaks.peaks[currentPeaks.peaks.length - 1];
-		if (last && !selectedPeak) {
-			selectPeak(last);
-		}
+		await refreshPeakMap(map, currentPeaks.peaks, currentCategories.categories, selectPeak);
 	}
 
 	function handleMapReady() {
 		mapReady = true;
-		buildMapAndSelectDefault().catch(console.log);
+		buildMap().catch(console.log);
+
+		if (selectedPeak) {
+			map?.moveTo(selectedPeak.lat, selectedPeak.lng).catch(console.log);
+		}
 	}
 
 	onMount(async () => {
 		await refreshPeakState(data.peaks, data.categories);
 
+		if (!selectedPeak && currentPeaks.peaks.length > 0) {
+			selectPeak(currentPeaks.peaks[currentPeaks.peaks.length - 1]);
+		}
+
 		if (mapReady) {
-			await buildMapAndSelectDefault();
+			await buildMap();
 		}
 	});
 </script>
@@ -63,14 +68,15 @@
 	<div class="container">
 		<div class="columns is-align-items-stretch">
 			<div class="column is-4 is-flex is-flex-direction-column">
-				<div class="mb-5" style="flex: 1; min-height: 0; display: flex; flex-direction: column;">
+				<div class="mb-5" style="height: 65vh; min-height: 0; display: flex; flex-direction: column;">
 					<Card title="Peaks">
-						<div style="flex: 1; min-height: 0; display: flex; flex-direction: column;">
+						<div style="flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column;">
 							<PeakSelectionList
 								categories={currentCategories.categories}
 								peaks={currentPeaks.peaks}
 								selectedId={selectedPeak?._id}
 								onSelect={selectPeak}
+								maxHeightVh={65}
 							/>
 						</div>
 					</Card>
@@ -78,9 +84,9 @@
 			</div>
 
 			<div class="column is-8 is-flex is-flex-direction-column">
-				<div class="mb-5" style="flex: 1; min-height: 0; display: flex; flex-direction: column;">
+				<div class="mb-5" style="height: 65vh; min-height: 0; display: flex; flex-direction: column;">
 					<Card title="Map">
-						<LeafletMap height={45} bind:this={map} onReady={handleMapReady} />
+						<LeafletMap height={65} bind:this={map} onReady={handleMapReady} />
 					</Card>
 				</div>
 			</div>
