@@ -2,7 +2,7 @@
 	import Menu from "$lib/ui/Menu.svelte";
 	import { loggedInUser } from "$lib/runes.svelte";
 
-	const { data } = $props();
+	const { data, children } = $props();
 
 	$effect(() => {
 		const s = data?.session;
@@ -25,5 +25,5 @@
 	{#if data?.session}
 		<Menu />
 	{/if}
-	<slot />
+	{@render children()}
 </div>
