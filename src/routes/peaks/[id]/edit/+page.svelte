@@ -9,7 +9,7 @@
 	import { refreshCategoryState } from "$lib/services/peak-utils";
 
 	import type { Peak } from "$lib/types/peak-types";
-	import { toPeakPayload } from "$lib/utils/peak-payload";
+	import { toPeakPayload } from "$lib/services/peak-payload";
 	import type { PageProps } from "./$types";
 
 	let { data }: PageProps = $props();

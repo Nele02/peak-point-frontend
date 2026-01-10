@@ -3,21 +3,16 @@
 	import LeafletMap from "$lib/ui/LeafletMap.svelte";
 	import PeakSelectionList from "$lib/ui/PeakSelectionList.svelte";
 
-	import type { Peak } from "$lib/types/peak-types";
+	import type { Peak, Category } from "$lib/types/peak-types";
 	import type { PageProps } from "./$types";
-
-	import { currentCategories, currentPeaks, subTitle } from "$lib/runes.svelte";
-	import { refreshPeakState } from "$lib/services/peak-utils";
 
 	import { nearestPeaks, popupFocus } from "$lib/services/map-utils";
 	import { peaksForCategory, UNCATEGORIZED, overlayNameForCategory } from "$lib/services/peak-layers";
 
-	subTitle.text = "Maps";
-
 	let { data }: PageProps = $props();
 
-	// Donation-style: immediately push SSR data into runes state
-	refreshPeakState(data.peaks ?? [], data.categories ?? []);
+	let peaks: Peak[] = $derived(data.peaks ?? []);
+	let categories: Category[] = $derived(data.categories ?? []);
 
 	let selected = $state<Peak | null>(null);
 	let radiusKm = $state(10);
@@ -39,8 +34,8 @@
 	const BOTTOM_HEIGHT_VH = 44;
 
 	type MarkerLike = { openPopup?: () => void };
-
-		let markerById = $state(new Map<string, MarkerLike>());
+	// eslint-disable-next-line svelte/prefer-svelte-reactivity
+	const markerById = new Map<string, MarkerLike>();
 
 	function popupNameOnly(p: Peak) {
 		return `<strong>${p.name}</strong>`;
@@ -72,9 +67,6 @@
 		markerById.clear();
 		await mapOverview.clearOverlays();
 		await mapOverview.clearMarkers();
-
-		const categories = currentCategories.categories;
-		const peaks = currentPeaks.peaks;
 
 		for (const c of categories) {
 			const overlayName = overlayNameForCategory(c);
@@ -145,8 +137,6 @@
 		await mapNearby.clearMarkers();
 
 		const radiusM = radiusKm * 1000;
-		const peaks = currentPeaks.peaks;
-
 		const results = nearestPeaks(peaks, p, radiusM, 120);
 
 		const selectedMarker = (await mapNearby.addMarker(p.lat, p.lng, popupNameOnly(p))) as unknown as MarkerLike;
@@ -192,13 +182,6 @@
 		]);
 	}
 
-	// init/default selection once peaks are in runes
-	$effect(() => {
-		if (selected) return;
-		if (currentPeaks.peaks.length === 0) return;
-		selected = currentPeaks.peaks[currentPeaks.peaks.length - 1] ?? null;
-	});
-
 	// init once when all maps are ready
 	$effect(() => {
 		if (initialized) return;
@@ -207,6 +190,13 @@
 
 		initialized = true;
 		applySelection(selected, "init").catch(console.log);
+	});
+
+	// init/default selection sobald peaks da sind
+	$effect(() => {
+		if (selected) return;
+		if (peaks.length === 0) return;
+		selected = peaks[peaks.length - 1] ?? null;
 	});
 </script>
 
@@ -218,8 +208,8 @@
 					<div class="pp-leftInner" style={`height:${OVERVIEW_HEIGHT_VH}vh;`}>
 						<div class="pp-leftScroll">
 							<PeakSelectionList
-								categories={currentCategories.categories}
-								peaks={currentPeaks.peaks}
+								categories={categories}
+								peaks={peaks}
 								selectedId={selected?._id}
 								onSelect={(p: Peak) => applySelection(p, "list")}
 							/>

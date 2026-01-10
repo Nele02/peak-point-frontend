@@ -15,6 +15,7 @@
 				<a class="navbar-item" href="/dashboard"> Dashboard </a>
 				<a class="navbar-item" href="/peaks"> Peaks </a>
 				<a class="navbar-item" href="/maps"> Maps </a>
+				<a class="navbar-item" href="/reports">Reports</a>
 				<form method="POST" action="/logout" class="navbar-item">
 					<button type="submit" class="navbar-item">
 						Logout [{loggedInUser.name}]
