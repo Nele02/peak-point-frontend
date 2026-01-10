@@ -115,9 +115,7 @@
 
 			<div class="column is-8">
 				<Card title="Peaks per Category">
-					<div class="pp-chart pp-chart--bar">
-						<Chart type="bar" data={barData()} />
-					</div>
+					<Chart type="bar" data={barData()} />
 				</Card>
 			</div>
 		</div>
@@ -125,17 +123,13 @@
 		<div class="columns is-variable is-4 pp-row">
 			<div class="column is-4">
 				<Card title="Elevation Bands">
-					<div class="pp-chart pp-chart--pie">
-						<Chart type="pie" data={pieData()} />
-					</div>
+						<Chart type="pie" maxSlices="10" data={pieData()} />
 				</Card>
 			</div>
 
 			<div class="column is-8">
 				<Card title="Elevation">
-					<div class="pp-chart pp-chart--line">
-						<Chart type="line" data={lineData()} />
-					</div>
+					<Chart type="line" data={lineData()} />
 				</Card>
 			</div>
 		</div>
@@ -158,14 +152,5 @@
         gap: 0.5rem;
         padding: 0.6rem 0.75rem;
         border-bottom: 1px solid #f2f2f2;
-    }
-
-    .pp-chart {
-        width: 100%;
-        min-height: 260px;
-    }
-
-    .pp-chart--pie {
-        min-height: 220px;
     }
 </style>
