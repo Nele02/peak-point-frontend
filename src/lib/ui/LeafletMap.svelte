@@ -1,3 +1,13 @@
+<script context="module" lang="ts">
+	export interface Props {
+		height?: number;
+		onReady?: () => void;
+		clusterMarkers?: boolean;
+		showTopoLayers?: boolean;
+		defaultBase?: "Standard" | "Satellite" | "Topo";
+	}
+</script>
+
 <script lang="ts">
 	import "leaflet/dist/leaflet.css";
 	import "leaflet.markercluster/dist/MarkerCluster.css";
@@ -6,35 +16,28 @@
 	import { onMount } from "svelte";
 	import type { Control, Map as LeafletMapType, Layer } from "leaflet";
 
-	type MapProps = {
-		height?: number;
-		onReady?: () => void;
-		clusterMarkers?: boolean;
-		showTopoLayers?: boolean;
-	};
-
-	let {
-		height = 60,
-		onReady,
-		clusterMarkers = false,
-		showTopoLayers = false
-	} = $props() as MapProps;
+	export let height: number = 60;
+	export let onReady: (() => void) | undefined;
+	export let clusterMarkers: boolean = false;
+	export let showTopoLayers: boolean = false;
+	export let defaultBase: "Standard" | "Satellite" | "Topo" = "Standard";
 
 	let id = "leaflet-map-" + Math.random().toString(16).slice(2);
 	let imap: LeafletMapType;
 
-	let L: typeof import("leaflet").default;
+	let L: typeof import("leaflet");
 	let control: Control.Layers;
 
 	let baseLayers: Record<string, Layer> = {};
 	let overlays: Record<string, Layer> = {};
 
+	// Overlay groups: LayerGroup OR MarkerClusterGroup
 	let overlayGroups: Record<string, unknown> = {};
 	let directLayers: Layer[] = [];
 
 	async function ensureLeaflet() {
 		const leaflet = await import("leaflet");
-		L = leaflet.default;
+		L = leaflet;
 		return leaflet;
 	}
 
@@ -44,13 +47,13 @@
 	}
 
 	function buildBaseLayers(leaflet: typeof import("leaflet")) {
-		const osm = leaflet.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+		const standard = leaflet.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
 			maxZoom: 18,
 			attribution:
 				'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 		});
 
-		const esri = leaflet.tileLayer(
+		const satellite = leaflet.tileLayer(
 			"https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
 			{
 				attribution:
@@ -65,23 +68,17 @@
 		});
 
 		baseLayers = {
-			OSM: osm,
-			Satellite: esri,
+			Standard: standard,
+			Satellite: satellite,
 			...(showTopoLayers ? { Topo: topo } : {})
 		};
 
-		if (showTopoLayers) {
-			const hillshade = leaflet.tileLayer("https://tiles.wmflabs.org/hillshading/{z}/{x}/{y}.png", {
-				maxZoom: 17,
-				opacity: 0.35,
-				attribution: 'Hillshade overlay: &copy; <a href="https://wikimedia.org">Wikimedia</a>'
-			});
-			overlays = { Hillshade: hillshade };
-		} else {
-			overlays = {};
-		}
+		overlays = {};
 
-		return { defaultLayer: showTopoLayers ? baseLayers["Topo"] : baseLayers["OSM"] };
+		const pick =
+			(defaultBase === "Topo" && !showTopoLayers ? "Standard" : defaultBase) as "Standard" | "Satellite" | "Topo";
+
+		return { defaultLayer: baseLayers[pick] ?? baseLayers["Standard"] };
 	}
 
 	onMount(async () => {
@@ -116,6 +113,31 @@
 		(group as unknown as { addTo: (m: LeafletMapType) => void }).addTo(imap);
 
 		return group;
+	}
+
+	function waitForMoveEnd(): Promise<void> {
+		return new Promise((resolve) => {
+			const handler = () => {
+				imap.off("moveend", handler);
+				resolve();
+			};
+			imap.on("moveend", handler);
+		});
+	}
+
+	// ✅ Needed by Dashboard refreshPeakMap()
+	export async function addOverlay(name: string) {
+		await ensureLeaflet();
+		await ensureClusterPlugin();
+		ensureOverlayGroup(name);
+	}
+
+	export async function clearOverlays() {
+		await clearOverlayGroups();
+	}
+
+	export async function clearMarkers() {
+		await clearDirectLayers();
 	}
 
 	export async function clearOverlayGroups() {
@@ -155,7 +177,6 @@
 		if (onClick) marker.on("click", () => onClick());
 
 		(group as { addLayer: (layer: Layer) => void }).addLayer(marker);
-
 		return marker;
 	}
 
@@ -176,16 +197,25 @@
 		return circle;
 	}
 
-	export async function moveTo(lat: number, lng: number, zoomLevel = 10) {
+	export async function moveTo(lat: number, lng: number, zoomLevel = 10, duration = 0.8) {
 		await ensureLeaflet();
-		imap.flyTo({ lat, lng }, zoomLevel);
+		const done = waitForMoveEnd();
+		imap.flyTo([lat, lng] as [number, number], zoomLevel, { animate: true, duration });
+		await done;
 	}
 
-	export async function fitToPoints(points: Array<{ lat: number; lng: number }>, padding = 30) {
+	export async function fitToPoints(
+		points: Array<{ lat: number; lng: number }>,
+		padding = 30,
+		duration = 0.8
+	) {
 		await ensureLeaflet();
 		if (!points || points.length === 0) return;
+
+		const done = waitForMoveEnd();
 		const bounds = L.latLngBounds(points.map((p) => [p.lat, p.lng] as [number, number]));
-		imap.fitBounds(bounds, { padding: [padding, padding] });
+		imap.flyToBounds(bounds, { padding: [padding, padding], animate: true, duration });
+		await done;
 	}
 </script>
 
