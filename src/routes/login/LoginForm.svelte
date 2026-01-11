@@ -5,18 +5,12 @@
 	import { peakService } from "$lib/services/peak-service";
 
 	let message = "";
-
-	const callback = import.meta.env.VITE_PUBLIC_OAUTH_CALLBACK_URL;
-	if (!callback) {
-		throw new Error("Missing env: VITE_PUBLIC_OAUTH_CALLBACK_URL");
-	}
-
-	const oauthGithubUrl = `${peakService.baseUrl}/api/oauth/github?redirectTo=${encodeURIComponent(callback)}`;
-	const oauthGoogleUrl = `${peakService.baseUrl}/api/oauth/google?redirectTo=${encodeURIComponent(callback)}`;
+	const oauthGithubUrl = `${peakService.baseUrl}/api/oauth/github`;
+	const oauthGoogleUrl = `${peakService.baseUrl}/api/oauth/google`;
 </script>
 
 {#if message}
-	<Message {message} />
+	<Message {message} />s
 {/if}
 
 <form method="POST" action="?/login" use:enhance>
