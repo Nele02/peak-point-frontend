@@ -1,7 +1,7 @@
 import type { Category, Peak } from "$lib/types/peak-types";
 import type LeafletMap from "$lib/ui/LeafletMap.svelte";
 
-import { curentDataSets, currentCategories, currentPeaks } from "$lib/runes.svelte";
+import { curentDataSets, currentCategories, currentPeaks, loggedInUser } from "$lib/runes.svelte";
 
 
 export function categoryIdsOfPeak(p: Peak): string[] {
@@ -39,6 +39,17 @@ export async function refreshPeakState(peaks: Peak[], categories: Category[]) {
 	currentPeaks.peaks = peaks;
 	currentCategories.categories = categories;
 	computePeaksByCategory(currentPeaks.peaks, currentCategories.categories);
+}
+
+export function clearPeakState() {
+	currentPeaks.peaks = [];
+	currentCategories.categories = [];
+	curentDataSets.peaksByCategory.labels = [];
+	curentDataSets.peaksByCategory.datasets[0].values = [];
+	loggedInUser.email = "";
+	loggedInUser.name = "";
+	loggedInUser.token = "";
+	loggedInUser._id = "";
 }
 
 function popupOverview(p: Peak): string {

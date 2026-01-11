@@ -11,7 +11,9 @@
 	import type { PageProps } from "./$types";
 
 	let { data }: PageProps = $props();
-	refreshCategoryState(data.categories ?? []);
+	$effect(() => {
+		refreshCategoryState(data.categories ?? []);
+	});
 
 	const empty: Peak = {
 		name: "",
