@@ -6,7 +6,11 @@
 
 	let message = "";
 
-	const callback = "http://localhost:5173/oauth/callback";
+	const callback = import.meta.env.VITE_PUBLIC_OAUTH_CALLBACK_URL;
+	if (!callback) {
+		throw new Error("Missing env: VITE_PUBLIC_OAUTH_CALLBACK_URL");
+	}
+
 	const oauthGithubUrl = `${peakService.baseUrl}/api/oauth/github?redirectTo=${encodeURIComponent(callback)}`;
 	const oauthGoogleUrl = `${peakService.baseUrl}/api/oauth/google?redirectTo=${encodeURIComponent(callback)}`;
 </script>
