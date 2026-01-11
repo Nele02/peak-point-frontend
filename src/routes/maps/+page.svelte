@@ -239,7 +239,7 @@
 				<Card title="Overview">
 					<LeafletMap
 						height={OVERVIEW_HEIGHT_VH}
-						clusterMarkers={false}
+						clusterMarkers={true}
 						showTopoLayers={true}
 						defaultBase="Standard"
 						bind:this={mapOverview}
