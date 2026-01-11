@@ -192,7 +192,7 @@
 		applySelection(selected, "init").catch(console.log);
 	});
 
-	// init/default selection sobald peaks da sind
+	// init/default selection when peaks loaded
 	$effect(() => {
 		if (selected) return;
 		if (peaks.length === 0) return;
@@ -239,7 +239,7 @@
 				<Card title="Overview">
 					<LeafletMap
 						height={OVERVIEW_HEIGHT_VH}
-						clusterMarkers={true}
+						clusterMarkers={false}
 						showTopoLayers={true}
 						defaultBase="Standard"
 						bind:this={mapOverview}
