@@ -16,7 +16,7 @@ export const load = async ({ url, cookies }) => {
 	cookies.set("peak-user", JSON.stringify(session), {
 		path: "/",
 		httpOnly: true,
-		sameSite: "strict",
+		sameSite: "lax",
 		secure: !dev,
 		maxAge: 60 * 60 * 24 * 7
 	});

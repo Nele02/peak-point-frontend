@@ -139,7 +139,9 @@
 	<hr />
 
 	<div class="field">
-		<label class="label">Categories</label>
+		<label class="label" for="categories">Categories</label>
+
+		<fieldset id="categories" class="is-sr-only" aria-hidden="true"></fieldset>
 
 		{#if props.categories.length === 0}
 			<p class="has-text-grey">No categories available.</p>

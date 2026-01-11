@@ -9,12 +9,12 @@
 </script>
 
 <script lang="ts">
-	import "leaflet/dist/leaflet.css";
-	import "leaflet.markercluster/dist/MarkerCluster.css";
-	import "leaflet.markercluster/dist/MarkerCluster.Default.css";
-
 	import { onMount } from "svelte";
-	import type { Control, Map as LeafletMapType, Layer } from "leaflet";
+	import type { Control, Layer, Map as LeafletMapType } from "leaflet";
+
+	import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
+	import markerIcon from "leaflet/dist/images/marker-icon.png";
+	import markerShadow from "leaflet/dist/images/marker-shadow.png";
 
 	export let height: number = 60;
 	export let onReady: (() => void) | undefined;
@@ -23,45 +23,64 @@
 	export let defaultBase: "Standard" | "Satellite" | "Topo" = "Standard";
 
 	let id = "leaflet-map-" + Math.random().toString(16).slice(2);
-	let imap: LeafletMapType;
 
-	let L: typeof import("leaflet");
+	let imap: LeafletMapType;
 	let control: Control.Layers;
+
+	let L: any;
+	let clusterLoaded = false;
 
 	let baseLayers: Record<string, Layer> = {};
 	let overlays: Record<string, Layer> = {};
 
-	// Overlay groups: LayerGroup OR MarkerClusterGroup
-	let overlayGroups: Record<string, unknown> = {};
+	let overlayGroups: Record<string, any> = {};
 	let directLayers: Layer[] = [];
 
 	async function ensureLeaflet() {
-		const leaflet = await import("leaflet");
+		if (L) return L;
+
+		const leafletMod = await import("leaflet");
+		const leaflet = (leafletMod as any).default ?? leafletMod;
+
 		L = leaflet;
+
+		(globalThis as any).L = leaflet;
+
+		delete (L.Icon.Default.prototype as any)._getIconUrl;
+		L.Icon.Default.mergeOptions({
+			iconRetinaUrl: markerIcon2x,
+			iconUrl: markerIcon,
+			shadowUrl: markerShadow
+		});
+
 		return leaflet;
 	}
 
 	async function ensureClusterPlugin() {
 		if (!clusterMarkers) return;
+		if (clusterLoaded) return;
+
+		await ensureLeaflet();
 		await import("leaflet.markercluster");
+
+		clusterLoaded = true;
 	}
 
-	function buildBaseLayers(leaflet: typeof import("leaflet")) {
-		const standard = leaflet.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+	function buildBaseLayers() {
+		const standard = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
 			maxZoom: 18,
 			attribution:
 				'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 		});
 
-		const satellite = leaflet.tileLayer(
+		const satellite = L.tileLayer(
 			"https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
 			{
-				attribution:
-					"Tiles &copy; Esri — Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community"
+				attribution: "Tiles &copy; Esri — Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community"
 			}
 		);
 
-		const topo = leaflet.tileLayer("https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png", {
+		const topo = L.tileLayer("https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png", {
 			maxZoom: 17,
 			attribution:
 				'Map data: &copy; OpenStreetMap contributors, SRTM | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a>'
@@ -76,25 +95,28 @@
 		overlays = {};
 
 		const pick =
-			(defaultBase === "Topo" && !showTopoLayers ? "Standard" : defaultBase) as "Standard" | "Satellite" | "Topo";
+			(defaultBase === "Topo" && !showTopoLayers ? "Standard" : defaultBase) as
+				| "Standard"
+				| "Satellite"
+				| "Topo";
 
 		return { defaultLayer: baseLayers[pick] ?? baseLayers["Standard"] };
 	}
 
 	onMount(async () => {
-		const leaflet = await ensureLeaflet();
+		await ensureLeaflet();
 		await ensureClusterPlugin();
 
-		const { defaultLayer } = buildBaseLayers(leaflet);
+		const { defaultLayer } = buildBaseLayers();
 
-		imap = leaflet.map(id, {
+		imap = L.map(id, {
 			center: [53.2734, -7.7783203],
 			zoom: 7,
 			minZoom: 3,
 			layers: [defaultLayer]
 		});
 
-		control = leaflet.control.layers(baseLayers, overlays).addTo(imap);
+		control = L.control.layers(baseLayers, overlays).addTo(imap);
 
 		onReady?.();
 	});
@@ -103,14 +125,11 @@
 		const existing = overlayGroups[name];
 		if (existing) return existing;
 
-		const group = clusterMarkers
-			? (L as unknown as { markerClusterGroup: () => unknown }).markerClusterGroup()
-			: L.layerGroup();
-
+		const group = clusterMarkers ? L.markerClusterGroup() : L.layerGroup();
 		overlayGroups[name] = group;
 
 		control.addOverlay(group as unknown as Layer, name);
-		(group as unknown as { addTo: (m: LeafletMapType) => void }).addTo(imap);
+		group.addTo(imap);
 
 		return group;
 	}
@@ -125,7 +144,6 @@
 		});
 	}
 
-	// ✅ Needed by Dashboard refreshPeakMap()
 	export async function addOverlay(name: string) {
 		await ensureLeaflet();
 		await ensureClusterPlugin();
@@ -144,8 +162,8 @@
 		await ensureLeaflet();
 
 		for (const g of Object.values(overlayGroups)) {
-			(g as { clearLayers: () => void }).clearLayers();
-			if (imap.hasLayer(g as unknown as Layer)) imap.removeLayer(g as unknown as Layer);
+			if (typeof g.clearLayers === "function") g.clearLayers();
+			if (imap && imap.hasLayer(g)) imap.removeLayer(g);
 		}
 
 		overlayGroups = {};
@@ -155,7 +173,7 @@
 		await ensureLeaflet();
 
 		for (const layer of directLayers) {
-			if (imap.hasLayer(layer)) imap.removeLayer(layer);
+			if (imap && imap.hasLayer(layer)) imap.removeLayer(layer);
 		}
 		directLayers = [];
 	}
@@ -176,7 +194,7 @@
 		if (popupHtml) marker.bindPopup(popupHtml);
 		if (onClick) marker.on("click", () => onClick());
 
-		(group as { addLayer: (layer: Layer) => void }).addLayer(marker);
+		group.addLayer(marker);
 		return marker;
 	}
 

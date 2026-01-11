@@ -14,9 +14,11 @@
 
 	let { data }: PageProps = $props();
 
-	refreshCategoryState(data.categories ?? []);
+	$effect(() => {
+		refreshCategoryState(data.categories ?? []);
+	});
 
-	let peak = $state<Peak | null>(data.peak ?? null);
+	const peak = $derived<Peak | null>(data.peak ?? null);
 
 	async function submit(updated: Peak, files: File[]) {
 		const id = page.params.id;

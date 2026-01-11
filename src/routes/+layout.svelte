@@ -1,6 +1,9 @@
 <script lang="ts">
 	import Menu from "$lib/ui/Menu.svelte";
 	import { loggedInUser } from "$lib/runes.svelte";
+	import "leaflet/dist/leaflet.css";
+	import "leaflet.markercluster/dist/MarkerCluster.css";
+	import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 
 	const { data, children } = $props();
 
