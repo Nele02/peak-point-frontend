@@ -3,7 +3,7 @@
 This frontend is part of the **Peak Point** project and represents **Level 3 + Level 4** of the assignment.  
 It builds on the CRUD features and focuses on **data visualisation (maps + charts)** and **OAuth login**.
 
-The application is implemented with **SvelteKit**, styled using **Bulma**, and follows the structure and patterns shown in the *donation-svelte* example from the lecture.
+The application is implemented with **SvelteKit**, styled using **Bulma**, and follows the structure and patterns shown in the _donation-svelte_ example from the lecture.
 
 ---
 
@@ -88,6 +88,7 @@ A new **Dashboard page** was added to visualise peaks:
 Not all UI elements are tested on purpose.
 
 ### Tested
+
 - Utility functions (e.g. dataset computation)
 - Reusable UI components where interaction matters:
   - `PeakSelectionList`
@@ -105,9 +106,8 @@ Level 4 adds **SSR**, **OAuth login** and extends visualisation with **richer ma
 
 Frontend was updated to use **SSR**:
 
-- protected pages redirect on the server if no session exists 
+- protected pages redirect on the server if no session exists
 - initial data for pages like **dashboard/maps/reports** is loaded server-side
-
 
 ### OAuth Login (GitHub + Google)
 
@@ -157,3 +157,4 @@ A reports page with filters + multiple chart types:
 ```bash
 npm install
 npm run dev
+```
