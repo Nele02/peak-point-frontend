@@ -11,9 +11,30 @@
 
 	let { data }: PageProps = $props();
 
-	refreshPeakState(data.peaks ?? [], data.categories ?? []);
+	const pageData = $derived(() => data);
 
-	let selected = $state<string[]>(data.selectedCategoryIds ?? []);
+	const peaks = $derived(() => pageData().peaks ?? []);
+	const categories = $derived(() => pageData().categories ?? []);
+
+	let lastPeaks: unknown = undefined;
+	let lastCategories: unknown = undefined;
+	$effect(() => {
+		const p = peaks();
+		const c = categories();
+		if (lastPeaks !== p || lastCategories !== c) {
+			lastPeaks = p;
+			lastCategories = c;
+			refreshPeakState(p, c);
+		}
+	});
+
+	const selectedFromUrl = $derived(() => pageData().selectedCategoryIds ?? []);
+
+	let selected = $derived.by(() => selectedFromUrl());
+
+	$effect(() => {
+		selected = selectedFromUrl();
+	});
 
 	function toggle(id: string) {
 		selected = selected.includes(id) ? selected.filter((x) => x !== id) : [...selected, id];
