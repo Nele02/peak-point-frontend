@@ -9,9 +9,6 @@
 </script>
 
 <script lang="ts">
-	import "leaflet.markercluster/dist/MarkerCluster.css";
-	import "leaflet.markercluster/dist/MarkerCluster.Default.css";
-
 	import { onMount } from "svelte";
 	import type { Control, Map as LeafletMapType, Layer } from "leaflet";
 
