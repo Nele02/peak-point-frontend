@@ -22,7 +22,7 @@
 
 <div class="buttons is-flex is-flex-direction-column">
 	<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
-	<a class="button is-link is-fullwidth" href={oauthGoogleUrl} rel="noopener noreferrer">Login with Google</a>
+	<a class="button is-link is-fullwidth" href={oauthGoogleUrl}>Login with Google</a>
 	<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
-	<a class="button is-dark is-fullwidth" href={oauthGithubUrl} rel="noopener noreferrer">Login with GitHub</a>
+	<a class="button is-dark is-fullwidth" href={oauthGithubUrl}>Login with GitHub</a>
 </div>

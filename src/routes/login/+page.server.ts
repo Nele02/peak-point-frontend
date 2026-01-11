@@ -19,7 +19,7 @@ export const actions = {
 			cookies.set("peak-user", userJson, {
 				path: "/",
 				httpOnly: true,
-				sameSite: "strict",
+				sameSite: "lax",
 				secure: !dev,
 				maxAge: 60 * 60 * 24 * 7
 			});
