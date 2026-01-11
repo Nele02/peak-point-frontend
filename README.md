@@ -1,21 +1,20 @@
-# Peak Point – Level 3 Frontend
+# Peak Point – Frontend (SvelteKit)
 
-This frontend is part of the **Peak Point** project and represents **Level 3** of the assignment.  
-The focus of this level is on **data visualisation** using **maps and charts**, building on the existing CRUD functionality for peaks.
+This frontend is part of the **Peak Point** project and represents **Level 3 + Level 4** of the assignment.  
+It builds on the CRUD features and focuses on **data visualisation (maps + charts)** and **OAuth login**.
 
-The application is implemented with **SvelteKit**, styled using **Bulma**, and follows the structure and patterns shown in the _donation-svelte_ example from the lecture.
+The application is implemented with **SvelteKit**, styled using **Bulma**, and follows the structure and patterns shown in the *donation-svelte* example from the lecture.
 
 ---
 
 ## Tech Stack
 
-- **SvelteKit** (client-side rendering for Level 3)
-- **TypeScript**
-- **Bulma** (UI styling)
-- **Axios** (API communication)
-- **Leaflet** (interactive maps)
+- **SvelteKit** + **TypeScript**
+- **Bulma** (styling)
+- **Axios** (API calls)
+- **Leaflet** + `leaflet.markercluster` (maps)
 - **svelte-frappe-charts** (charts)
-- **Vitest + Testing Library** (selected component tests)
+- **Vitest + Testing Library** (selected tests)
 
 ---
 
@@ -31,11 +30,11 @@ The goals of Level 3 were:
 
 ---
 
-## Implemented Features
+## Implemented Features (Level 3)
 
-### Dashboard
+### Dashboard (`/dashboard`)
 
-A new **Dashboard page** (`/dashboard`) was added to visualise peaks:
+A new **Dashboard page** was added to visualise peaks:
 
 - **Interactive Leaflet map**
   - Peaks are shown as markers
@@ -47,8 +46,8 @@ A new **Dashboard page** (`/dashboard`) was added to visualise peaks:
 - **Peak selection list**
   - Clean, minimal UI
   - Peaks grouped by categories
-  - Categories are expandable / collapsible
-  - List is scrollable inside its card
+  - Categories expandable / collapsible
+  - Scrollable inside its card
   - Selecting a peak updates the map and info panel
 
 - **Peak info panel**
@@ -62,7 +61,7 @@ A new **Dashboard page** (`/dashboard`) was added to visualise peaks:
 
 ---
 
-## Map Implementation
+## Map Implementation (Level 3)
 
 - Uses **Leaflet** with OpenStreetMap tiles
 - Categories are implemented as **overlay layers**
@@ -74,7 +73,7 @@ A new **Dashboard page** (`/dashboard`) was added to visualise peaks:
 
 ---
 
-## Charts
+## Charts (Level 3)
 
 - Implemented with **svelte-frappe-charts**
 - Current chart:
@@ -84,12 +83,11 @@ A new **Dashboard page** (`/dashboard`) was added to visualise peaks:
 
 ---
 
-## Testing Strategy
+## Testing Strategy (Level 3)
 
 Not all UI elements are tested on purpose.
 
 ### Tested
-
 - Utility functions (e.g. dataset computation)
 - Reusable UI components where interaction matters:
   - `PeakSelectionList`
@@ -99,10 +97,63 @@ This keeps the test suite realistic and focused, similar to the lecture examples
 
 ---
 
+## Level 4 Features
+
+Level 4 adds **SSR**, **OAuth login** and extends visualisation with **richer maps + reports**.
+
+### Server-Side Rendering (SSR)
+
+Frontend was updated to use **SSR**:
+
+- protected pages redirect on the server if no session exists 
+- initial data for pages like **dashboard/maps/reports** is loaded server-side
+
+
+### OAuth Login (GitHub + Google)
+
+- Login via **GitHub** and **Google**
+- OAuth flow is handled by the backend
+- Frontend receives the session via `/oauth/callback`
+- Works in production deployment (Netlify + Render)
+
+### Maps Page (`/maps`)
+
+A new page with multiple maps:
+
+- **Overview map** with marker clustering
+- **Focus map** (selected peak)
+- **Nearby map** (peaks in radius)
+
+Selecting a peak in list or map synchronises all maps.
+
+### Reports Page (`/reports`)
+
+A reports page with filters + multiple chart types:
+
+- filters:
+  - multiple categories
+  - minimum elevation
+- charts:
+  - bar (peaks per category)
+  - pie (elevation bands)
+  - line (elevation distribution)
+
+### Extra used Libraries (Level 4)
+
+- `leaflet.markercluster`
+- `@types/leaflet.markercluster`
+
+---
+
+## Deployment
+
+- Netlify:
+  `https://peak-point-svelte.netlify.app`
+
+---
+
 ## Running the Project
 
 ```bash
 npm install
 npm run dev
-
-```
