@@ -99,7 +99,15 @@ This keeps the test suite realistic and focused, similar to the lecture examples
 
 ## Level 4 Features
 
-Level 4 adds **OAuth login** and extends visualisation with **richer maps + reports**.
+Level 4 adds **SSR**, **OAuth login** and extends visualisation with **richer maps + reports**.
+
+### Server-Side Rendering (SSR)
+
+Frontend was updated to use **SSR**:
+
+- protected pages redirect on the server if no session exists 
+- initial data for pages like **dashboard/maps/reports** is loaded server-side
+
 
 ### OAuth Login (GitHub + Google)
 
