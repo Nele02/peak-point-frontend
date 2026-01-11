@@ -2,19 +2,38 @@
 	import { goto } from "$app/navigation";
 
 	import { currentCategories, currentPeaks } from "$lib/runes.svelte";
+	import { refreshPeakState } from "$lib/services/peak-utils";
+
 	import PeakToolbar from "$lib/ui/PeakToolbar.svelte";
 	import PeakList from "$lib/ui/PeakList.svelte";
+
 	import type { PageProps } from "./$types";
 
-	const props = $props();
+	let { data }: PageProps = $props();
 
-	let selected = $state<string[]>(props.data.selectedCategoryIds ?? []);
+	const pageData = $derived(() => data);
+
+	const peaks = $derived(() => pageData().peaks ?? []);
+	const categories = $derived(() => pageData().categories ?? []);
+
+	let lastPeaks: unknown = undefined;
+	let lastCategories: unknown = undefined;
+	$effect(() => {
+		const p = peaks();
+		const c = categories();
+		if (lastPeaks !== p || lastCategories !== c) {
+			lastPeaks = p;
+			lastCategories = c;
+			refreshPeakState(p, c);
+		}
+	});
+
+	const selectedFromUrl = $derived(() => pageData().selectedCategoryIds ?? []);
+
+	let selected = $derived.by(() => selectedFromUrl());
 
 	$effect(() => {
-		currentCategories.categories = props.data.categories;
-		currentPeaks.peaks = props.data.peaks;
-
-		selected = props.data.selectedCategoryIds ?? [];
+		selected = selectedFromUrl();
 	});
 
 	function toggle(id: string) {

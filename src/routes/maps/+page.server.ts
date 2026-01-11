@@ -6,10 +6,10 @@ export const load: PageServerLoad = async ({ parent }) => {
 	const { session } = await parent();
 	if (!session) throw redirect(303, "/login");
 
-	const [categories, peaks] = await Promise.all([
-		peakService.getAllCategories(session.token),
-		peakService.getUserPeaks(session._id, session.token, {})
+	const [peaks, categories] = await Promise.all([
+		peakService.getUserPeaks(session._id, session.token, {}),
+		peakService.getAllCategories(session.token)
 	]);
 
-	return { categories, peaks };
+	return { peaks, categories };
 };
