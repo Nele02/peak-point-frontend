@@ -75,7 +75,12 @@
 									{#if categoryName(id)}
 										<span class="tag is-info is-light">
 											{categoryName(id)}
-											<button class="delete is-small" type="button" onclick={() => removeCategory(id)}></button>
+											<button
+												class="delete is-small"
+												type="button"
+												aria-label={`Remove category ${categoryName(id)}`}
+												onclick={() => removeCategory(id)}
+											></button>
 										</span>
 									{/if}
 								{/each}
@@ -100,9 +105,16 @@
 						</div>
 
 						<div class="field">
-							<label class="label">Minimum elevation (m)</label>
+							<label class="label" for="min-elevation">Minimum elevation (m)</label>
 							<div class="control">
-								<input class="input" type="number" min="0" step="50" bind:value={minElevation} />
+								<input
+									id="min-elevation"
+									class="input"
+									type="number"
+									min="0"
+									step="50"
+									bind:value={minElevation}
+								/>
 							</div>
 						</div>
 
