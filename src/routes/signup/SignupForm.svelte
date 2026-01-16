@@ -1,12 +1,19 @@
 <script lang="ts">
-  import { enhance } from "$app/forms";
-  import { resolve } from "$app/paths";
   import Message from "$lib/ui/Message.svelte";
   import UserCredentials from "$lib/ui/UserCredentials.svelte";
   import UserDetails from "$lib/ui/UserDetails.svelte";
 
-  const props = $props<{ form?: { message?: string } }>();
-  const message = $derived(props.form?.message ?? "");
+  const props = $props<{ form?: unknown }>();
+
+  const f = $derived(
+    (props.form ?? {}) as {
+      message?: string;
+      values?: { firstName?: string; lastName?: string; email?: string };
+    }
+  );
+
+  const message = $derived(f.message ?? "");
+  const values = $derived(f.values ?? {});
 </script>
 
 <div class="box">
@@ -14,15 +21,9 @@
     <Message {message} />
   {/if}
 
-  <form method="POST" action="?/signup" use:enhance>
-    <UserDetails />
-    <UserCredentials />
-
-    <button class="button is-link is-fullwidth" type="submit">Sign Up</button>
+  <form method="POST" action="?/signup">
+    <UserDetails {values} />
+    <UserCredentials {values} />
+    <button class="button is-success is-fullwidth" type="submit">Sign Up</button>
   </form>
-
-  <p class="has-text-centered mt-3">
-    Already have an account?
-    <a href={resolve("/login")} data-cy="login-redirect">Login Here</a>
-  </p>
 </div>

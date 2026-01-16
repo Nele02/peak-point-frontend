@@ -4,23 +4,41 @@ import { peakService } from "$lib/services/peak-service";
 
 export const actions: Actions = {
   signup: async ({ request }) => {
-    const form = await request.formData();
+    const data = await request.formData();
 
-    const firstName = (form.get("firstName") as string) ?? "";
-    const lastName = (form.get("lastName") as string) ?? "";
-    const email = (form.get("email") as string) ?? "";
-    const password = (form.get("password") as string) ?? "";
+    const firstName = String(data.get("firstName") ?? "").trim();
+    const lastName = String(data.get("lastName") ?? "").trim();
+    const email = String(data.get("email") ?? "").trim();
+    const password = String(data.get("password") ?? "").trim();
 
-    if (!firstName || !lastName || !email || !password) {
-      return fail(400, { message: "Please fill in all fields." });
-    }
+    if (!firstName)
+      return fail(400, {
+        message: "First name is required",
+        values: { firstName, lastName, email }
+      });
+    if (!lastName)
+      return fail(400, {
+        message: "Last name is required",
+        values: { firstName, lastName, email }
+      });
+    if (!email)
+      return fail(400, { message: "Email is required", values: { firstName, lastName, email } });
+    if (!password)
+      return fail(400, { message: "Password is required", values: { firstName, lastName, email } });
 
-    const ok = await peakService.signup({ firstName, lastName, email, password });
-
-    if (ok) {
+    try {
+      await peakService.signup({ firstName, lastName, email, password });
       throw redirect(303, "/login");
+    } catch (e: unknown) {
+      let msg = "Signup failed";
+      if (typeof e === "object" && e !== null) {
+        const obj = e as Record<string, unknown>;
+        const response = obj.response as Record<string, unknown> | undefined;
+        const respData = response?.data as Record<string, unknown> | undefined;
+        const backendMsg = respData?.message;
+        if (typeof backendMsg === "string" && backendMsg.trim().length > 0) msg = backendMsg;
+      }
+      return fail(400, { message: msg, values: { firstName, lastName, email } });
     }
-
-    return fail(400, { message: "Signup failed" });
   }
 };

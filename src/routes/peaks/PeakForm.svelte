@@ -15,6 +15,9 @@
   let saving = $state(false);
   let errorMsg = $state("");
 
+  // field validation messages
+  let fieldErrors = $state<Record<string, string>>({});
+
   function categoriesToIds(value: unknown): string[] {
     if (!value) return [];
     if (Array.isArray(value) && value.every((c) => typeof c === "string")) return value as string[];
@@ -75,51 +78,153 @@
     form.images = imgs.filter((_, idx) => idx !== i);
   }
 
+  function safeString(v: unknown) {
+    return typeof v === "string" ? v : v == null ? "" : String(v);
+  }
+
+  function toNumber(v: unknown): number {
+    const n = typeof v === "number" ? v : Number(safeString(v));
+    return Number.isFinite(n) ? n : NaN;
+  }
+
+  function validate(): boolean {
+    const errs: Record<string, string> = {};
+
+    const trimmedName = safeString(form.name).trim();
+    if (trimmedName.length === 0) {
+      errs.name = "Name is required.";
+    }
+
+    const e = toNumber(form.elevation);
+    if (Number.isNaN(e)) {
+      errs.elevation = "Elevation is required.";
+    } else if (!Number.isInteger(e)) {
+      errs.elevation = "Elevation must be an integer (meters).";
+    } else if (e < 1) {
+      errs.elevation = "Elevation must be greater than 0.";
+    }
+
+    const la = toNumber(form.lat);
+    if (Number.isNaN(la)) {
+      errs.lat = "Latitude is required.";
+    } else if (la < -90 || la > 90) {
+      errs.lat = "Latitude must be between -90 and 90.";
+    }
+
+    const lo = toNumber(form.lng);
+    if (Number.isNaN(lo)) {
+      errs.lng = "Longitude is required.";
+    } else if (lo < -180 || lo > 180) {
+      errs.lng = "Longitude must be between -180 and 180.";
+    }
+
+    fieldErrors = errs;
+    return Object.keys(errs).length === 0;
+  }
+
+  function normalizeBackendError(e: unknown): string {
+    const fallback = "Saving failed. Please try again.";
+
+    if (e instanceof Error) return e.message;
+
+    if (typeof e === "object" && e !== null) {
+      const obj = e as Record<string, unknown>;
+      const response = obj.response as Record<string, unknown> | undefined;
+      const data = response?.data as Record<string, unknown> | undefined;
+
+      const msg = data?.message;
+      if (typeof msg === "string" && msg.trim().length > 0) return msg;
+
+      const details = data?.details;
+      if (Array.isArray(details) && details.length > 0) {
+        const strings = details.filter((d): d is string => typeof d === "string");
+        if (strings.length > 0)
+          return `${typeof msg === "string" ? msg : "Validation error"}: ${strings.slice(0, 4).join(" ")}`;
+      }
+    }
+
+    return fallback;
+  }
+
   async function submit() {
     try {
       errorMsg = "";
+      fieldErrors = {};
+
+      if (!validate()) {
+        errorMsg = "Please fix the highlighted fields.";
+        return;
+      }
+
+      const payload: Peak = {
+        ...form,
+        name: safeString(form.name).trim(),
+        elevation: Number.parseInt(safeString(form.elevation), 10),
+        lat: toNumber(form.lat),
+        lng: toNumber(form.lng)
+      };
+
       saving = true;
-      await props.onSubmit(form, newFiles);
+      await props.onSubmit(payload, newFiles);
     } catch (e) {
-      console.log(e);
-      errorMsg = "Saving failed. Please try again.";
+      errorMsg = normalizeBackendError(e);
     } finally {
       saving = false;
     }
   }
+
+  // cleanup preview URLs
+  $effect(() => {
+    return () => {
+      for (const url of previewUrls) URL.revokeObjectURL(url);
+    };
+  });
 </script>
 
 <div class="box">
   <h1 class="title is-4">{props.title}</h1>
 
   {#if errorMsg}
-    <div class="notification is-danger is-light">{errorMsg}</div>
+    <article class="message is-danger">
+      <div class="message-body">{errorMsg}</div>
+    </article>
   {/if}
 
   <div class="field">
-    <label class="label" for="name">Name</label>
+    <label class="label" for="name">Name *</label>
     <div class="control">
       <input
         id="name"
-        class="input"
+        class="input {fieldErrors.name ? 'is-danger' : ''}"
         type="text"
         bind:value={form.name}
         placeholder="e.g. Brocken"
+        required
+        minlength="1"
       />
     </div>
+    {#if fieldErrors.name}
+      <p class="help is-danger">{fieldErrors.name}</p>
+    {/if}
   </div>
 
   <div class="field">
-    <label class="label" for="elevation">Elevation (m)</label>
+    <label class="label" for="elevation">Elevation (m) *</label>
     <div class="control">
       <input
         id="elevation"
-        class="input"
+        class="input {fieldErrors.elevation ? 'is-danger' : ''}"
         type="number"
         bind:value={form.elevation}
         placeholder="e.g. 1141"
+        required
+        min="1"
+        step="1"
       />
     </div>
+    {#if fieldErrors.elevation}
+      <p class="help is-danger">{fieldErrors.elevation}</p>
+    {/if}
   </div>
 
   <div class="field">
@@ -133,18 +238,44 @@
   <div class="columns">
     <div class="column">
       <div class="field">
-        <label class="label" for="lat">Lat</label>
+        <label class="label" for="lat">Lat *</label>
         <div class="control">
-          <input id="lat" class="input" type="number" step="any" bind:value={form.lat} />
+          <input
+            id="lat"
+            class="input {fieldErrors.lat ? 'is-danger' : ''}"
+            type="number"
+            step="any"
+            min="-90"
+            max="90"
+            bind:value={form.lat}
+            required
+            placeholder="e.g. 47.4215"
+          />
         </div>
+        {#if fieldErrors.lat}
+          <p class="help is-danger">{fieldErrors.lat}</p>
+        {/if}
       </div>
     </div>
     <div class="column">
       <div class="field">
-        <label class="label" for="lng">Lng</label>
+        <label class="label" for="lng">Lng *</label>
         <div class="control">
-          <input id="lng" class="input" type="number" step="any" bind:value={form.lng} />
+          <input
+            id="lng"
+            class="input {fieldErrors.lng ? 'is-danger' : ''}"
+            type="number"
+            step="any"
+            min="-180"
+            max="180"
+            bind:value={form.lng}
+            required
+            placeholder="e.g. 11.9842"
+          />
         </div>
+        {#if fieldErrors.lng}
+          <p class="help is-danger">{fieldErrors.lng}</p>
+        {/if}
       </div>
     </div>
   </div>
@@ -208,6 +339,7 @@
               class="button is-small is-light mt-2"
               type="button"
               onclick={() => removeExistingImage(i)}
+              disabled={saving}
             >
               Remove
             </button>
@@ -230,6 +362,7 @@
               class="button is-small is-light mt-2"
               type="button"
               onclick={() => removeNewFile(i)}
+              disabled={saving}
             >
               Remove
             </button>
