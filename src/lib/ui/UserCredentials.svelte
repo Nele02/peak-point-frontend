@@ -1,5 +1,6 @@
 <script lang="ts">
-  let { email = $bindable(""), password = $bindable("") } = $props();
+  const props = $props<{ values?: { email?: string } }>();
+  const values = props.values ?? {};
 </script>
 
 <div class="field">
@@ -7,30 +8,30 @@
   <div class="control has-icons-left">
     <input
       id="email"
-      bind:value={email}
       class="input"
-      type="text"
-      placeholder="Email"
+      type="email"
       name="email"
+      placeholder="Email"
+      value={values.email ?? ""}
+      required
+      autocomplete="email"
     />
-    <span class="icon is-small is-left">
-      <i class="fa fa-envelope"></i>
-    </span>
+    <span class="icon is-small is-left"><i class="fa fa-envelope"></i></span>
   </div>
 </div>
+
 <div class="field">
   <label class="label" for="password">Password</label>
   <div class="control has-icons-left">
     <input
       id="password"
-      bind:value={password}
       class="input"
       type="password"
-      placeholder="Password"
       name="password"
+      placeholder="Password"
+      required
+      autocomplete="current-password"
     />
-    <span class="icon is-small is-left">
-      <i class="fa fa-key"></i>
-    </span>
+    <span class="icon is-small is-left"><i class="fa fa-key"></i></span>
   </div>
 </div>

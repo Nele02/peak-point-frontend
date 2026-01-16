@@ -1,31 +1,29 @@
-import { dev } from "$app/environment";
+import { fail, redirect } from "@sveltejs/kit";
+import type { Actions } from "./$types";
 import { peakService } from "$lib/services/peak-service";
-import { redirect } from "@sveltejs/kit";
 
-export const actions = {
+export const actions: Actions = {
   login: async ({ request, cookies }) => {
-    const form = await request.formData();
-    const email = form.get("email") as string;
-    const password = form.get("password") as string;
+    const data = await request.formData();
+    const email = String(data.get("email") ?? "").trim();
+    const password = String(data.get("password") ?? "").trim();
 
-    if (email === "" || password === "") {
-      throw redirect(307, "/login");
-    }
+    if (!email) return fail(400, { message: "Email is required", values: { email } });
+    if (!password) return fail(400, { message: "Password is required", values: { email } });
 
     const session = await peakService.login(email, password);
 
-    if (session) {
-      const userJson = JSON.stringify(session);
-      cookies.set("peak-user", userJson, {
-        path: "/",
-        httpOnly: true,
-        sameSite: "lax",
-        secure: !dev,
-        maxAge: 60 * 60 * 24 * 7
-      });
-      throw redirect(303, "/dashboard");
-    } else {
-      throw redirect(307, "/login");
+    if (!session) {
+      return fail(401, { message: "Invalid credentials", values: { email } });
     }
+
+    cookies.set("peak-user", JSON.stringify(session), {
+      path: "/",
+      httpOnly: true,
+      sameSite: "lax",
+      secure: false
+    });
+
+    throw redirect(303, "/peaks");
   }
 };
