@@ -5,10 +5,12 @@
 
   const props = $props<{ form?: unknown }>();
 
-  const f = $derived((props.form ?? {}) as {
-    message?: string;
-    values?: { firstName?: string; lastName?: string; email?: string };
-  });
+  const f = $derived(
+    (props.form ?? {}) as {
+      message?: string;
+      values?: { firstName?: string; lastName?: string; email?: string };
+    }
+  );
 
   const message = $derived(f.message ?? "");
   const values = $derived(f.values ?? {});
@@ -16,12 +18,12 @@
 
 <div class="box">
   {#if message}
-    <Message message={message} />
+    <Message {message} />
   {/if}
 
   <form method="POST" action="?/signup">
-    <UserDetails values={values} />
-    <UserCredentials values={values} />
+    <UserDetails {values} />
+    <UserCredentials {values} />
     <button class="button is-success is-fullwidth" type="submit">Sign Up</button>
   </form>
 </div>

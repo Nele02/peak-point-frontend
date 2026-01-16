@@ -35,7 +35,7 @@
   let form = $state<Peak>({
     ...props.peak,
     images: (props.peak.images ?? []) as StoredImage[],
-    categories: categoriesToIds(props.peak.categories),
+    categories: categoriesToIds(props.peak.categories)
   });
 
   let newFiles = $state<File[]>([]);
@@ -138,13 +138,13 @@
       const details = data?.details;
       if (Array.isArray(details) && details.length > 0) {
         const strings = details.filter((d): d is string => typeof d === "string");
-        if (strings.length > 0) return `${typeof msg === "string" ? msg : "Validation error"}: ${strings.slice(0, 4).join(" ")}`;
+        if (strings.length > 0)
+          return `${typeof msg === "string" ? msg : "Validation error"}: ${strings.slice(0, 4).join(" ")}`;
       }
     }
 
     return fallback;
   }
-
 
   async function submit() {
     try {
@@ -161,7 +161,7 @@
         name: safeString(form.name).trim(),
         elevation: Number.parseInt(safeString(form.elevation), 10),
         lat: toNumber(form.lat),
-        lng: toNumber(form.lng),
+        lng: toNumber(form.lng)
       };
 
       saving = true;
@@ -172,7 +172,6 @@
       saving = false;
     }
   }
-
 
   // cleanup preview URLs
   $effect(() => {
@@ -231,11 +230,7 @@
   <div class="field">
     <label class="label" for="desc">Description</label>
     <div class="control">
-      <textarea
-        id="desc"
-        class="textarea"
-        bind:value={form.description}
-        placeholder="Short note..."
+      <textarea id="desc" class="textarea" bind:value={form.description} placeholder="Short note..."
       ></textarea>
     </div>
   </div>
