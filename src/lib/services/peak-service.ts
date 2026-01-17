@@ -1,6 +1,6 @@
 import axios from "axios";
 import qs from "qs";
-import type { Category, Peak, Session, StoredImage, User } from "$lib/types/peak-types";
+import type { Category, Peak, Session, StoredImage, TwoFactorChallenge, User } from '$lib/types/peak-types';
 
 function setAuth(token: string) {
   axios.defaults.headers.common["Authorization"] = "Bearer " + token;
@@ -24,14 +24,23 @@ export const peakService = {
     }
   },
 
-  async login(email: string, password: string): Promise<Session | null> {
+  async login(email: string, password: string): Promise<Session | TwoFactorChallenge | null> {
     try {
-      const response = await axios.post(`${this.baseUrl}/api/users/authenticate`, {
-        email,
-        password
-      });
+      const response = await axios.post(`${this.baseUrl}/api/users/authenticate`, { email, password });
 
-      if (response.data.success) {
+      // 2fa challenge flow
+      if (response.data?.twoFactorRequired) {
+        return {
+          twoFactorRequired: true,
+          tempToken: response.data.tempToken,
+          name: response.data.name,
+          email: response.data.email,
+          _id: response.data._id
+        };
+      }
+
+      // normal login
+      if (response.data?.success) {
         setAuth(response.data.token);
 
         const session: Session = {
@@ -43,7 +52,71 @@ export const peakService = {
 
         return session;
       }
+
       return null;
+    } catch (error) {
+      console.log(error);
+      return null;
+    }
+  },
+
+  //2fas
+  async verify2faLogin(tempToken: string, code: string): Promise<Session | null> {
+    try {
+      const res = await axios.post(`${this.baseUrl}/api/2fa/verify-login`, { tempToken, code });
+
+      if (res.data?.success) {
+        setAuth(res.data.token);
+        return {
+          name: res.data.name,
+          email: res.data.email,
+          token: res.data.token,
+          _id: res.data._id
+        };
+      }
+      return null;
+    } catch (error) {
+      console.log(error);
+      return null;
+    }
+  },
+
+  async recovery2faLogin(tempToken: string, recoveryCode: string): Promise<Session | null> {
+    try {
+      const res = await axios.post(`${this.baseUrl}/api/2fa/recovery-login`, { tempToken, recoveryCode });
+
+      if (res.data?.success) {
+        setAuth(res.data.token);
+        return {
+          name: res.data.name,
+          email: res.data.email,
+          token: res.data.token,
+          _id: res.data._id
+        };
+      }
+      return null;
+    } catch (error) {
+      console.log(error);
+      return null;
+    }
+  },
+
+  async setup2fa(token: string): Promise<{ otpauthUrl: string } | null> {
+    try {
+      setAuth(token);
+      const res = await axios.post(`${this.baseUrl}/api/2fa/setup`);
+      return res.data;
+    } catch (error) {
+      console.log(error);
+      return null;
+    }
+  },
+
+  async verify2faSetup(token: string, code: string): Promise<{ enabled: boolean; recoveryCodes: string[] } | null> {
+    try {
+      setAuth(token);
+      const res = await axios.post(`${this.baseUrl}/api/2fa/verify-setup`, { code });
+      return res.data;
     } catch (error) {
       console.log(error);
       return null;
