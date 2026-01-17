@@ -25,6 +25,11 @@ export const actions: Actions = {
       return fail(400, { message: "Email is required", values: { firstName, lastName, email } });
     if (!password)
       return fail(400, { message: "Password is required", values: { firstName, lastName, email } });
+    if (password.length < 6)
+      return fail(400, {
+        message: "Password length must be at least 6 characters",
+        values: { firstName, lastName, email }
+      });
 
     try {
       await peakService.signup({ firstName, lastName, email, password });
