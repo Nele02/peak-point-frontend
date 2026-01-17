@@ -17,9 +17,10 @@
     Marker,
     Circle,
     LayerGroup,
-    MarkerClusterGroup,
-    LeafletNamespace
+    MarkerClusterGroup
   } from "leaflet";
+
+  type LeafletModule = typeof import("leaflet");
 
   import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
   import markerIcon from "leaflet/dist/images/marker-icon.png";
@@ -36,7 +37,7 @@
   let imap: LeafletMapType;
   let control: Control.Layers;
 
-  let L: LeafletNamespace | undefined;
+  let L: LeafletModule | undefined;
   let clusterLoaded = false;
 
   let baseLayers: Record<string, Layer> = {};
@@ -45,19 +46,20 @@
   let overlayGroups: Record<string, LayerGroup | MarkerClusterGroup> = {};
   let directLayers: Layer[] = [];
 
+  // Loads Leaflet in the browser
   async function ensureLeaflet() {
     if (L) return L;
 
     const leafletMod = await import("leaflet");
-    const leaflet =
-      (leafletMod as unknown as { default?: LeafletNamespace }).default ??
-      (leafletMod as unknown as LeafletNamespace);
+    const leaflet = ((leafletMod as unknown as { default?: LeafletModule }).default ??
+      (leafletMod as unknown as LeafletModule)) as LeafletModule;
 
     L = leaflet;
 
-    // some plugins rely on global L
-    (globalThis as unknown as { L?: LeafletNamespace }).L = leaflet;
+    // Some plugins (like markercluster) expect a global `L`.
+    (globalThis as unknown as { L?: LeafletModule }).L = leaflet;
 
+    // Fix marker icon URLs for bundlers (Vite) by setting explicit image paths.
     delete (L.Icon.Default.prototype as unknown as { _getIconUrl?: unknown })._getIconUrl;
     L.Icon.Default.mergeOptions({
       iconRetinaUrl: markerIcon2x,
@@ -68,6 +70,7 @@
     return leaflet;
   }
 
+  // Loads the markercluster plugin only when clustering is enabled.
   async function ensureClusterPlugin() {
     if (!clusterMarkers) return;
     if (clusterLoaded) return;
@@ -78,6 +81,7 @@
     clusterLoaded = true;
   }
 
+  // Creates the base tile layers and returns which one should be active by default.
   function buildBaseLayers() {
     if (!L) throw new Error("Leaflet not loaded");
     const standard = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -117,23 +121,31 @@
   }
 
   onMount(async () => {
+    // Init map on component mount.
+    // Make sure Leaflet is loaded before we access `L.map()` etc.
     await ensureLeaflet();
     await ensureClusterPlugin();
 
+    // After ensureLeaflet() `L` must be available. We keep a local non-undefined reference.
+    const leaflet = L!;
+
     const { defaultLayer } = buildBaseLayers();
 
-    imap = L.map(id, {
+    // Create the actual map instance.
+    imap = leaflet.map(id, {
       center: [53.2734, -7.7783203],
       zoom: 7,
       minZoom: 3,
       layers: [defaultLayer]
     });
 
-    control = L.control.layers(baseLayers, overlays).addTo(imap);
+    // Adds the layer switcher UI (base layers + overlays) on the map.
+    control = leaflet.control.layers(baseLayers, overlays).addTo(imap);
 
     onReady?.();
   });
 
+  // Gets (or creates) an overlay group by name, so we can add markers into it.
   function ensureOverlayGroup(name: string) {
     if (!L) throw new Error("Leaflet not loaded");
     const existing = overlayGroups[name];
@@ -150,6 +162,7 @@
     return group;
   }
 
+  // Waits until the map finished moving (used for flyTo/flyToBounds).
   function waitForMoveEnd(): Promise<void> {
     return new Promise((resolve) => {
       const handler = () => {
@@ -160,20 +173,24 @@
     });
   }
 
+  // Creates an overlay layer entry in the layer-control UI.
   export async function addOverlay(name: string) {
     await ensureLeaflet();
     await ensureClusterPlugin();
     ensureOverlayGroup(name);
   }
 
+  // Clears all named overlay groups.
   export async function clearOverlays() {
     await clearOverlayGroups();
   }
 
+  // Clears markers/circles that were added directly (not inside overlays).
   export async function clearMarkers() {
     await clearDirectLayers();
   }
 
+  // Removes overlay groups from the map and resets our internal overlay state.
   export async function clearOverlayGroups() {
     await ensureLeaflet();
     if (!L) throw new Error("Leaflet not loaded");
@@ -186,6 +203,7 @@
     overlayGroups = {};
   }
 
+  // Removes direct layers from the map and resets our internal list.
   export async function clearDirectLayers() {
     await ensureLeaflet();
     if (!L) throw new Error("Leaflet not loaded");
@@ -196,6 +214,7 @@
     directLayers = [];
   }
 
+  // Adds a marker to a named overlay group (optional popup + click callback).
   export async function addMarkerToOverlay(
     overlayName: string,
     lat: number,
@@ -206,9 +225,12 @@
     await ensureLeaflet();
     await ensureClusterPlugin();
 
+    // After ensureLeaflet(), Leaflet must be assigned.
+    const leaflet = L!;
+
     const group = ensureOverlayGroup(overlayName);
 
-    const marker: Marker = L.marker([lat, lng]);
+    const marker: Marker = leaflet.marker([lat, lng]);
     if (popupHtml) marker.bindPopup(popupHtml);
     if (onClick) marker.on("click", () => onClick());
 
@@ -216,6 +238,7 @@
     return marker;
   }
 
+  // Adds a marker directly to the map.
   export async function addMarker(lat: number, lng: number, popupHtml: string): Promise<Marker> {
     await ensureLeaflet();
     if (!L) throw new Error("Leaflet not loaded");
@@ -225,6 +248,7 @@
     return marker;
   }
 
+  // Adds a circle directly to the map (radius display).
   export async function addCircle(
     lat: number,
     lng: number,
@@ -240,6 +264,7 @@
     return circle;
   }
 
+  // Moves the map to a point with an animation.
   export async function moveTo(lat: number, lng: number, zoomLevel = 10, duration = 0.8) {
     await ensureLeaflet();
     if (!L) throw new Error("Leaflet not loaded");
@@ -248,6 +273,7 @@
     await done;
   }
 
+  // Zooms/pans so all given points are visible.
   export async function fitToPoints(
     points: Array<{ lat: number; lng: number }>,
     padding = 30,
