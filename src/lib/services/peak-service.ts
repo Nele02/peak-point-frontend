@@ -14,15 +14,12 @@ export const peakService = {
 
   // Auth
 
-  async signup(user: User): Promise<boolean> {
-    try {
-      const response = await axios.post(`${this.baseUrl}/api/users`, user);
-      return response.status === 201;
-    } catch (error) {
-      console.log(error);
-      return false;
-    }
+  async signup(user: User): Promise<void> {
+    await axios.post(`${this.baseUrl}/api/users`, user);
   },
+
+
+
 
   async login(email: string, password: string): Promise<Session | TwoFactorChallenge | null> {
     try {
@@ -58,6 +55,12 @@ export const peakService = {
       console.log(error);
       return null;
     }
+  },
+
+  async getUser(id: string, token: string): Promise<{ twoFactorEnabled: boolean; email: string; firstName: string; lastName: string; _id: string }> {
+    setAuth(token);
+    const res = await axios.get(`${this.baseUrl}/api/users/${id}`);
+    return res.data;
   },
 
   //2fas
