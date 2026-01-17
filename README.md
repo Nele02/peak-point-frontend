@@ -1,9 +1,24 @@
 # Peak Point – Frontend (SvelteKit)
 
-This frontend is part of the **Peak Point** project and represents **Level 3 + Level 4** of the assignment.  
-It builds on the CRUD features and focuses on **data visualisation (maps + charts)** and **OAuth login**.
+This frontend is part of the **Peak Point** project for the *Advanced Full Stack Development* module.  
+It is the **SvelteKit implementation** of the app and covers **Level 3–5** of the assignment.
 
-The application is implemented with **SvelteKit**, styled using **Bulma**, and follows the structure and patterns shown in the _donation-svelte_ example from the lecture.
+The goal of the frontend was to extend the basic CRUD application with:
+- **data visualisation (maps + charts)**
+- **SSR + OAuth login**
+- Level 5 DevOps / testing extras like CI and unit tests
+
+The project follows the structure and patterns from the lecture examples (especially *donation-svelte*).
+
+---
+
+## Live Demo
+
+- Deployed Frontend (Netlify):  
+  `https://peak-point-svelte.netlify.app`
+
+- Backend (Render):  
+  `https://peak-point.onrender.com`
 
 ---
 
@@ -12,149 +27,146 @@ The application is implemented with **SvelteKit**, styled using **Bulma**, and f
 - **SvelteKit** + **TypeScript**
 - **Bulma** (styling)
 - **Axios** (API calls)
-- **Leaflet** + `leaflet.markercluster` (maps)
+- **Leaflet** (maps)
+- `leaflet.markercluster` (marker clustering)
 - **svelte-frappe-charts** (charts)
-- **Vitest + Testing Library** (selected tests)
+- **Vitest + @testing-library/svelte + jsdom** (unit tests)
+- `qrcode` (QR codes for 2FA setup)
 
 ---
 
-## Level 3 Goals
+## Levels Overview
 
-The goals of Level 3 were:
+### Level 3 (Visualisation / Dashboard)
+- interactive map with layers for categories
+- chart: peaks per category
+- peak selection list + peak info panel
 
-- Visualise peaks on an interactive map
-- Group and filter data by categories
-- Add meaningful charts based on existing data
-- Keep the UI clean and simple
-- Follow lecture examples and patterns
+### Level 4 (SSR + OAuth + richer reports)
+- SSR (protected pages + server-side loading)
+- OAuth login (GitHub + Google)
+- multiple maps per page + richer chart types
 
----
-
-## Implemented Features (Level 3)
-
-### Dashboard (`/dashboard`)
-
-A new **Dashboard page** was added to visualise peaks:
-
-- **Interactive Leaflet map**
-  - Peaks are shown as markers
-  - Categories are implemented as **map layers**
-  - Layers can be toggled on/off
-  - Clicking a marker selects the peak
-  - Selecting a peak always zooms to a consistent level
-
-- **Peak selection list**
-  - Clean, minimal UI
-  - Peaks grouped by categories
-  - Categories expandable / collapsible
-  - Scrollable inside its card
-  - Selecting a peak updates the map and info panel
-
-- **Peak info panel**
-  - Shows details of the currently selected peak
-  - Includes images (carousel), elevation, description and categories
-
-- **Chart: Peaks per Category**
-  - Bar chart showing how many peaks belong to each category
-  - Implemented using `svelte-frappe-charts`
-  - Dataset is computed from existing peak and category data
+### Level 5 (extras)
+- marker clustering (overview map)
+- frontend unit tests
+- frontend CI pipeline (lint/tests/build)
+- frontend deployment on Netlify
 
 ---
 
-## Map Implementation (Level 3)
+# Level 3 Features
 
-- Uses **Leaflet** with OpenStreetMap tiles
-- Categories are implemented as **overlay layers**
-- Markers are added per category
-- A shared `moveTo(lat, lng, zoom)` function ensures consistent zoom when:
-  - clicking a marker
-  - selecting a peak from the list
-  - refreshing the map
+## Dashboard (`/dashboard`)
 
----
+The dashboard focuses on showing peaks visually:
 
-## Charts (Level 3)
+### Interactive Map
+- Leaflet map with OpenStreetMap tiles
+- markers for peaks
+- **category layers** as Leaflet overlays
+- clicking a marker selects the peak
+- selecting a peak always uses consistent zoom via helper functions
 
-- Implemented with **svelte-frappe-charts**
-- Current chart:
-  - **Peaks per Category** (bar chart)
-- Chart datasets are computed in `peak-utils.ts`
-- Charts update automatically when peak data changes
+### Peak Selection
+- peaks grouped by category
+- collapsible category sections
+- selecting an item synchronises map + peak info panel
 
----
+### Peak Info Panel
+- name, elevation, description
+- categories
+- image carousel (multiple images per peak)
 
-## Testing Strategy (Level 3)
-
-Not all UI elements are tested on purpose.
-
-### Tested
-
-- Utility functions (e.g. dataset computation)
-- Reusable UI components where interaction matters:
-  - `PeakSelectionList`
-  - `PeakCard`
-
-This keeps the test suite realistic and focused, similar to the lecture examples.
+### Chart: Peaks per Category
+- bar chart showing distribution of peaks across categories
+- dataset is computed from peaks + categories data
 
 ---
 
-## Level 4 Features
+# Level 4 Features
 
-Level 4 adds **SSR**, **OAuth login** and extends visualisation with **richer maps + reports**.
-
-### Server-Side Rendering (SSR)
-
-Frontend was updated to use **SSR**:
+## Server-Side Rendering (SSR)
+The frontend uses SSR in a practical way:
 
 - protected pages redirect on the server if no session exists
-- initial data for pages like **dashboard/maps/reports** is loaded server-side
+- initial page data is loaded in `+page.server.ts` (faster UX and less client-side fetching)
+- categories/peaks are loaded in parallel via `Promise.all(...)`
 
-### OAuth Login (GitHub + Google)
+## OAuth Login (GitHub + Google)
+- OAuth flow is handled by the backend (Hapi Bell)
+- frontend redirects to backend OAuth endpoints (`/api/oauth/github`, `/api/oauth/google`)
+- backend redirects back to `/oauth/callback` with session values
+- production-ready flow (Netlify + Render)
 
-- Login via **GitHub** and **Google**
-- OAuth flow is handled by the backend
-- Frontend receives the session via `/oauth/callback`
-- Works in production deployment (Netlify + Render)
+## Maps Page (`/maps`)
+- page contains multiple maps:
+  - overview map
+  - focus map (selected peak)
+  - nearby map (peaks inside radius)
+- selecting a peak syncs all maps and the UI
 
-### Maps Page (`/maps`)
-
-A new page with multiple maps:
-
-- **Overview map** with marker clustering
-- **Focus map** (selected peak)
-- **Nearby map** (peaks in radius)
-
-Selecting a peak in list or map synchronises all maps.
-
-### Reports Page (`/reports`)
-
-A reports page with filters + multiple chart types:
+## Reports Page (`/reports`)
+Reports page provides filters + multiple chart types:
 
 - filters:
-  - multiple categories
+  - select multiple categories
   - minimum elevation
 - charts:
-  - bar (peaks per category)
-  - pie (elevation bands)
-  - line (elevation distribution)
-
-### Extra used Libraries (Level 4)
-
-- `leaflet.markercluster`
-- `@types/leaflet.markercluster`
+  - bar chart (peaks per category)
+  - pie chart (elevation bands)
+  - line chart (distribution)
 
 ---
 
-## Deployment
+# Level 5 Features
 
-- Netlify:
-  `https://peak-point-svelte.netlify.app`
+## Marker Clustering (Maps)
+For the overview map I added marker clustering:
+
+- implemented using `leaflet.markercluster`
+- prevents marker overlap when zoomed out
+- makes map more readable and faster
+
+In the reusable map component I switch between:
+- normal `layerGroup` (no clustering)
+- `markerClusterGroup` (clustering)
+
+This is controlled with a `clusterMarkers` prop.
+
+## Frontend Unit Tests
+Unit tests were added to keep the test suite realistic:
+
+### Test Setup
+- **Vitest** = test runner
+- **Testing Library** = component rendering + interaction
+- **jsdom** = browser-like DOM so Svelte components can be tested
+
+### What is tested?
+- **utility functions** (dataset calculations, filtering logic)
+- a few **UI components** where it makes sense (forms + feedback messages)
+
+### What is not tested?
+- Leaflet map rendering itself (heavy + plugin based, better suited for E2E testing)
+
+---
+## CI + Deployment
+
+### CI Pipeline (Frontend)
+Netlify automatically deploys on changes to `main`, so I added a CI pipeline to prevent broken deploys:
+
+- lint
+- unit tests
+- build
+
+### Deployment
+- Netlify deploys automatically from the `main` branch
+- environment variables are configured in Netlify for API base URL and Cloudinary settings
 
 ---
 
-## Running the Project
+## Running locally
 
 ```bash
 npm install
 npm run dev
-```
