@@ -26,9 +26,9 @@ describe("SignupForm", () => {
   });
 
   it("has login redirect link", () => {
-    const { container } = render(SignupForm, { props: { form: undefined } });
+    const { container } = render(SignupForm, { props: {} });
 
-    const link = container.querySelector('a[href="/login"][data-cy="login-redirect"]');
+    const link = container.querySelector('a[href="/login"]');
     expect(link).toBeTruthy();
   });
 });

@@ -13,6 +13,14 @@ export interface User {
   _id?: string;
 }
 
+export type TwoFactorChallenge = {
+  twoFactorRequired: true;
+  tempToken: string;
+  name: string;
+  email: string;
+  _id: string;
+};
+
 export interface StoredImage {
   url: string;
   publicId?: string;

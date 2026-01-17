@@ -28,9 +28,9 @@ export const actions: Actions = {
 
     try {
       await peakService.signup({ firstName, lastName, email, password });
-      throw redirect(303, "/login");
     } catch (e: unknown) {
       let msg = "Signup failed";
+
       if (typeof e === "object" && e !== null) {
         const obj = e as Record<string, unknown>;
         const response = obj.response as Record<string, unknown> | undefined;
@@ -38,7 +38,9 @@ export const actions: Actions = {
         const backendMsg = respData?.message;
         if (typeof backendMsg === "string" && backendMsg.trim().length > 0) msg = backendMsg;
       }
+
       return fail(400, { message: msg, values: { firstName, lastName, email } });
     }
+    throw redirect(303, "/login");
   }
 };
