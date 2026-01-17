@@ -25,6 +25,14 @@ describe("SignupForm", () => {
     expect(getByText("Signup failed")).toBeInTheDocument();
   });
 
+  it("shows an error message when password is too short", () => {
+    const { getByText } = render(SignupForm, {
+      props: { form: { message: "Password too short" } }
+    });
+
+    expect(getByText("Password too short")).toBeInTheDocument();
+  });
+
   it("has login redirect link", () => {
     const { container } = render(SignupForm, { props: {} });
 
