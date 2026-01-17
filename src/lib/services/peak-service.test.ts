@@ -65,7 +65,6 @@ describe("peakService", () => {
     await expect(peakService.signup(user)).rejects.toThrow("Network error");
   });
 
-
   // login
 
   it("login returns a session and sets axios Authorization header on success", async () => {

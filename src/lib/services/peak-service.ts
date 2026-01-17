@@ -1,6 +1,13 @@
 import axios from "axios";
 import qs from "qs";
-import type { Category, Peak, Session, StoredImage, TwoFactorChallenge, User } from '$lib/types/peak-types';
+import type {
+  Category,
+  Peak,
+  Session,
+  StoredImage,
+  TwoFactorChallenge,
+  User
+} from "$lib/types/peak-types";
 
 function setAuth(token: string) {
   axios.defaults.headers.common["Authorization"] = "Bearer " + token;
@@ -18,12 +25,12 @@ export const peakService = {
     await axios.post(`${this.baseUrl}/api/users`, user);
   },
 
-
-
-
   async login(email: string, password: string): Promise<Session | TwoFactorChallenge | null> {
     try {
-      const response = await axios.post(`${this.baseUrl}/api/users/authenticate`, { email, password });
+      const response = await axios.post(`${this.baseUrl}/api/users/authenticate`, {
+        email,
+        password
+      });
 
       // 2fa challenge flow
       if (response.data?.twoFactorRequired) {
@@ -57,7 +64,16 @@ export const peakService = {
     }
   },
 
-  async getUser(id: string, token: string): Promise<{ twoFactorEnabled: boolean; email: string; firstName: string; lastName: string; _id: string }> {
+  async getUser(
+    id: string,
+    token: string
+  ): Promise<{
+    twoFactorEnabled: boolean;
+    email: string;
+    firstName: string;
+    lastName: string;
+    _id: string;
+  }> {
     setAuth(token);
     const res = await axios.get(`${this.baseUrl}/api/users/${id}`);
     return res.data;
@@ -86,7 +102,10 @@ export const peakService = {
 
   async recovery2faLogin(tempToken: string, recoveryCode: string): Promise<Session | null> {
     try {
-      const res = await axios.post(`${this.baseUrl}/api/2fa/recovery-login`, { tempToken, recoveryCode });
+      const res = await axios.post(`${this.baseUrl}/api/2fa/recovery-login`, {
+        tempToken,
+        recoveryCode
+      });
 
       if (res.data?.success) {
         setAuth(res.data.token);
@@ -115,7 +134,10 @@ export const peakService = {
     }
   },
 
-  async verify2faSetup(token: string, code: string): Promise<{ enabled: boolean; recoveryCodes: string[] } | null> {
+  async verify2faSetup(
+    token: string,
+    code: string
+  ): Promise<{ enabled: boolean; recoveryCodes: string[] } | null> {
     try {
       setAuth(token);
       const res = await axios.post(`${this.baseUrl}/api/2fa/verify-setup`, { code });

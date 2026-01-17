@@ -11,10 +11,20 @@ export const actions: Actions = {
     const email = String(data.get("email") ?? "").trim();
     const password = String(data.get("password") ?? "").trim();
 
-    if (!firstName) return fail(400, { message: "First name is required", values: { firstName, lastName, email } });
-    if (!lastName) return fail(400, { message: "Last name is required", values: { firstName, lastName, email } });
-    if (!email) return fail(400, { message: "Email is required", values: { firstName, lastName, email } });
-    if (!password) return fail(400, { message: "Password is required", values: { firstName, lastName, email } });
+    if (!firstName)
+      return fail(400, {
+        message: "First name is required",
+        values: { firstName, lastName, email }
+      });
+    if (!lastName)
+      return fail(400, {
+        message: "Last name is required",
+        values: { firstName, lastName, email }
+      });
+    if (!email)
+      return fail(400, { message: "Email is required", values: { firstName, lastName, email } });
+    if (!password)
+      return fail(400, { message: "Password is required", values: { firstName, lastName, email } });
 
     try {
       await peakService.signup({ firstName, lastName, email, password });

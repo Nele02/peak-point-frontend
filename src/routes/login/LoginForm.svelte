@@ -1,7 +1,7 @@
 <script lang="ts">
   import Message from "$lib/ui/Message.svelte";
   import UserCredentials from "$lib/ui/UserCredentials.svelte";
-  import { peakService } from '$lib/services/peak-service';
+  import { peakService } from "$lib/services/peak-service";
 
   const props = $props<{ form?: unknown }>();
 

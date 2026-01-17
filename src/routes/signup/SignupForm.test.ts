@@ -31,5 +31,4 @@ describe("SignupForm", () => {
     const link = container.querySelector('a[href="/login"]');
     expect(link).toBeTruthy();
   });
-
 });

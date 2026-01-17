@@ -22,7 +22,6 @@ describe("PeakForm", () => {
     await fireEvent.input(screen.getByLabelText(/lat/i), { target: { value: "51.808" } });
     await fireEvent.input(screen.getByLabelText(/lng/i), { target: { value: "10.618" } });
 
-
     await fireEvent.click(screen.getByRole("button", { name: "Save" }));
 
     expect(onSubmit).toHaveBeenCalledOnce();
