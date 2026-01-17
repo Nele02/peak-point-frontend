@@ -27,3 +27,8 @@
     <button class="button is-success is-fullwidth" type="submit">Sign Up</button>
   </form>
 </div>
+
+<p class="has-text-centered">
+  <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
+  <a href="/login">Already have an account? Login</a>
+</p>

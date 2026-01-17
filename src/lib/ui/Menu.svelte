@@ -17,6 +17,7 @@
         <a class="navbar-item" href={resolve("/peaks")}> Peaks </a>
         <a class="navbar-item" href={resolve("/maps")}> Maps </a>
         <a class="navbar-item" href={resolve("/reports")}>Reports</a>
+        <a class="navbar-item" href={resolve("/account")}>Account</a>
         <form method="POST" action="/logout" class="navbar-item">
           <button type="submit" class="navbar-item">
             Logout [{loggedInUser.name}]
