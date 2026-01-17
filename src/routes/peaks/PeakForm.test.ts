@@ -17,8 +17,11 @@ describe("PeakForm", () => {
       onSubmit
     });
 
-    await fireEvent.input(screen.getByLabelText("Name"), { target: { value: "Brocken" } });
-    await fireEvent.input(screen.getByLabelText("Elevation (m)"), { target: { value: "1141" } });
+    await fireEvent.input(screen.getByLabelText(/name/i), { target: { value: "Brocken" } });
+    await fireEvent.input(screen.getByLabelText(/elevation/i), { target: { value: "1141" } });
+    await fireEvent.input(screen.getByLabelText(/lat/i), { target: { value: "51.808" } });
+    await fireEvent.input(screen.getByLabelText(/lng/i), { target: { value: "10.618" } });
+
 
     await fireEvent.click(screen.getByRole("button", { name: "Save" }));
 

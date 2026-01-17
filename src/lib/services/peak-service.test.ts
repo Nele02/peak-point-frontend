@@ -38,39 +38,33 @@ describe("peakService", () => {
 
   // signup
 
-  it("signup returns true when API returns 201", async () => {
-    mockedAxios.post.mockResolvedValueOnce({
-      status: 201,
-      data: {}
-    });
+  it("signup resolves when API returns 201", async () => {
+    mockedAxios.post.mockResolvedValueOnce({ status: 201 });
 
     const user: User = {
-      firstName: "Test",
-      lastName: "User",
-      email: "test@example.com",
+      firstName: "Homer",
+      lastName: "Simpson",
+      email: "homer@simpson.com",
       password: "secret"
     };
 
-    const result = await peakService.signup(user);
-
-    expect(result).toBe(true);
+    await expect(peakService.signup(user)).resolves.toBeUndefined();
     expect(mockedAxios.post).toHaveBeenCalledWith(`${peakService.baseUrl}/api/users`, user);
   });
 
-  it("signup returns false when request fails", async () => {
+  it("signup throws when request fails", async () => {
     mockedAxios.post.mockRejectedValueOnce(new Error("Network error"));
 
     const user: User = {
-      firstName: "Fail",
-      lastName: "Case",
-      email: "fail@example.com",
-      password: "nope"
+      firstName: "Homer",
+      lastName: "Simpson",
+      email: "homer@simpson.com",
+      password: "secret"
     };
 
-    const result = await peakService.signup(user);
-
-    expect(result).toBe(false);
+    await expect(peakService.signup(user)).rejects.toThrow("Network error");
   });
+
 
   // login
 
